@@ -1,0 +1,110 @@
+---
+test_name: Test Product Access Happy Path
+
+stages:
+  - name: Signup user for product tests
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_productshappy@test.com"
+        password: "password123"
+        age: 40
+        gender: "Male"
+    response:
+      status_code: 201
+
+  - name: Login to get token
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/login"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_productshappy@test.com"
+        password: "password123"
+    response:
+      status_code: 200
+      save:
+        json:
+          token: "token"
+
+  - name: Search product
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/search?query=laptop&k=1"
+      method: GET
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 200
+      save:
+        json:
+          item_id: "[0].item_id"
+
+  - name: Access product
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/{item_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 200
+
+  - name: Track interaction
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/{item_id}/interactions/click"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 204
+
+---
+test_name: Test Product Access Edge Cases
+
+stages:
+  - name: Signup user for product tests
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_prodtest@test.com"
+        password: "password123"
+        age: 40
+        gender: "Male"
+    response:
+      status_code: 201
+
+  - name: Login to get token
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/login"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_prodtest@test.com"
+        password: "password123"
+    response:
+      status_code: 200
+      save:
+        json:
+          token: "token"
+
+  - name: Access non-existent product
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/NONEXISTENT123"
+      method: GET
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 500
+
+  - name: Track interaction on non-existent product
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/NONEXISTENT123/interactions/click"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 204

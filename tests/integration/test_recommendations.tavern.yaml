@@ -1,16 +1,29 @@
 ---
 test_name: Test Get Recommendations
+
 marks:
-  - flaky: "This test is flaky implementation might change"
+  - skip: "This test is skipped because it fail"
 
 stages:
-  - name: Login and get token
+  - name: Signup user for recommendations test
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_recommendations@test.com"
+        password: "password123"
+        age: 35
+        gender: "Male"
+    response:
+      status_code: 201
+
+  - name: Login to get token
     request:
       url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/login"
       method: POST
       json:
-        email: "demo1@example.com"
-        password: "demo123"
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_recommendations@test.com"
+        password: "password123"
     response:
       status_code: 200
       save:

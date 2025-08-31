@@ -185,7 +185,7 @@ stages:
     response:
       status_code: 204
 
-  - name: User2 tries to access User1's cart (should succeed but see empty cart)
+  - name: User2 tries to access User1's cart
     request:
       url: "{tavern.env_vars.TEST_FRONTEND_URL}/cart/{user1_id}"
       method: GET

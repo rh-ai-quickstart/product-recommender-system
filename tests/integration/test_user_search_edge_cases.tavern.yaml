@@ -1,0 +1,129 @@
+test_name: Test Product Image Search
+
+stages:
+  - name: Signup user for image search
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_imgsearch_edge@test.com"
+        password: "password123"
+        age: 28
+        gender: "Male"
+    response:
+      status_code: 201
+
+  - name: Login to get token
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/login"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_imgsearch_edge@test.com"
+        password: "password123"
+    response:
+      status_code: 200
+      save:
+        json:
+          token: "token"
+
+  - name: Set user preferences
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/users/preferences"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+      json:
+        preferences: "Electronics,Computers&Accessories"
+    response:
+      status_code: 200
+
+  - name: Search with special characters
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/search?query=%40%23%24%25"
+      method: GET
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 200
+
+  - name: Search by invalid image URL
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/search/image-link"
+      json:
+        image_url: "https://not-a-url.com"
+        num_recommendations: 10
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 400
+      json:
+        detail: "Invalid or unreachable image URL."
+
+  - name: Search without image_link parameter
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/search/image_link"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 405
+
+---
+test_name: Test Product Image Search Edge Cases
+
+marks:
+  - skip: "This test is skipped because it fail"
+
+stages:
+  - name: Signup user for image search
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_imgsearch_edge@test.com"
+        password: "password123"
+        age: 28
+        gender: "Male"
+    response:
+      status_code: 201
+
+  - name: Login to get token
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/login"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_imgsearch_edge@test.com"
+        password: "password123"
+    response:
+      status_code: 200
+      save:
+        json:
+          token: "token"
+
+  - name: Set user preferences
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/users/preferences"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+      json:
+        preferences: "Electronics,Computers&Accessories"
+    response:
+      status_code: 200
+
+
+  - name: Search with empty query
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/search?query="
+      method: GET
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 422

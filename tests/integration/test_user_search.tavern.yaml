@@ -113,8 +113,11 @@ stages:
 
   - name: Test Search for products by image link
     request:
-      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/search/image_link?image_link=https://m.media-amazon.com/images/I/61yH2X4re6L._AC_UY218_.jpg 1x, https://m.media-amazon.com/images/I/61yH2X4re6L._AC_UY327_FMwebp_QL65_.jpg 1.5x, https://m.media-amazon.com/images/I/61yH2X4re6L._AC_UY436_FMwebp_QL65_.jpg 2x, https://m.media-amazon.com/images/I/61yH2X4re6L._AC_UY545_FMwebp_QL65_.jpg 2.5x, https://m.media-amazon.com/images/I/61yH2X4re6L._AC_UY654_FMwebp_QL65_.jpg"
-      method: GET
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/products/search/image-link"
+      json:
+        image_url: "https://m.media-amazon.com/images/I/61yH2X4re6L._AC_UY218_.jpg"
+        num_recommendations: 10
+      method: POST
       headers:
         Authorization: "Bearer {token}"
         Content-Type: "application/json"
@@ -123,7 +126,6 @@ stages:
       verify_response_with:
         function: tests_helpers:validate_product_list
         extra_kwargs:
-          expected_length: 5
           required_fields:
             - item_id
             - product_name

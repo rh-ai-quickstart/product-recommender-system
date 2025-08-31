@@ -78,3 +78,85 @@ stages:
           preferences: "Home&Kitchen,HomeTheater,TV&Video"
           views: []
         token: !anystr
+
+---
+test_name: Test Boundary Values for User Data
+
+stages:
+  - name: Signup with minimum age
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_minage@test.com"
+        password: "password123"
+        age: 1
+        gender: "Male"
+    response:
+      status_code: 201
+
+  - name: Signup with maximum reasonable age
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_maxage@test.com"
+        password: "password123"
+        age: 120
+        gender: "Female"
+    response:
+      status_code: 201
+
+  - name: Signup with very long email (but valid format)
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_verylongemailaddressfortesting@test.com"
+        password: "password123"
+        age: 25
+        gender: "Male"
+    response:
+      status_code: 201
+
+  - name: Login and get token for cart tests
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/login"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_minage@test.com"
+        password: "password123"
+    response:
+      status_code: 200
+      save:
+        json:
+          token: "token"
+          user_id: "user.user_id"
+
+  - name: Add maximum quantity to cart
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/cart/{user_id}"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+      json:
+        user_id: "{user_id}"
+        product_id: "1"
+        quantity: 999
+    response:
+      status_code: 204
+
+  - name: Verify large quantity in cart
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/cart/{user_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 200
+      json:
+        - user_id: "{user_id}"
+          product_id: "1"
+          quantity: 999

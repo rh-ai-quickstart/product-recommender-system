@@ -1,0 +1,137 @@
+---
+test_name: Test User Preferences Edge Cases
+
+stages:
+  - name: Signup user for preferences test
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/signup"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_prefs@test.com"
+        password: "password123"
+        age: 35
+        gender: "Male"
+    response:
+      status_code: 201
+
+  - name: Login to get token
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/auth/login"
+      method: POST
+      json:
+        email: "test{tavern.env_vars.TEST_TIMESTAMP}_prefs@test.com"
+        password: "password123"
+    response:
+      status_code: 200
+      save:
+        json:
+          token: "token"
+
+  - name: Set preferences with single category
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/users/preferences"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+      json:
+        preferences: "Electronics"
+    response:
+      status_code: 200
+      json:
+        user:
+          user_id: !anystr
+          email: !anystr
+          age: !anyint
+          gender: !anystr
+          signup_date: !anystr
+          preferences: "Electronics"
+          views: []
+        token: !anystr
+  - name: Update preferences with multiple categories
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/users/preferences"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+      json:
+        preferences: "Books,Electronics,Sports&Outdoors,Home&Kitchen"
+    response:
+      status_code: 200
+      json:
+        user:
+          user_id: !anystr
+          email: !anystr
+          age: !anyint
+          gender: !anystr
+          signup_date: !anystr
+          preferences: "Books,Electronics,Sports&Outdoors,Home&Kitchen"
+          views: []
+        token: !anystr
+
+  - name: Set empty preferences
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/users/preferences"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+      json:
+        preferences: ""
+    response:
+      status_code: 200
+      json:
+        user:
+          user_id: !anystr
+          email: !anystr
+          age: !anyint
+          gender: !anystr
+          signup_date: !anystr
+          preferences: ""
+          views: []
+        token: !anystr
+
+  - name: Set preferences with special characters
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/users/preferences"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+      json:
+        preferences: "Arts&Crafts,Movies&TV"
+    response:
+      status_code: 200
+      json:
+        user:
+          user_id: !anystr
+          email: !anystr
+          age: !anyint
+          gender: !anystr
+          signup_date: !anystr
+          preferences: "Arts&Crafts,Movies&TV"
+          views: []
+        token: !anystr
+
+  - name: Set preferences with spaces (should be handled)
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/users/preferences"
+      method: POST
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+      json:
+        preferences: "Arts & Crafts, Movies & TV"
+    response:
+      status_code: 200
+      json:
+        user:
+          user_id: !anystr
+          email: !anystr
+          age: !anyint
+          gender: !anystr
+          signup_date: !anystr
+          preferences: "Arts & Crafts, Movies & TV"
+          views: []
+        token: !anystr
