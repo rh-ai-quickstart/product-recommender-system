@@ -1,0 +1,44 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: product-recommender-tester-cluster-role
+rules:
+# Grant admin access to all resources in all API groups
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+# Grant access to OpenShift specific resources
+- apiGroups: ["route.openshift.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["project.openshift.io"]
+  resources: ["*"]
+  verbs: ["*"]
+# Grant access to OpenDataHub resources
+- apiGroups: ["datasciencepipelinesapplications.opendatahub.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["modelregistry.opendatahub.io"]
+  resources: ["*"]
+  verbs: ["*"]
+# Grant access to Feast resources
+- apiGroups: ["feast.dev"]
+  resources: ["*"]
+  verbs: ["*"]
+# Grant access to RBAC resources
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: product-recommender-tester-cluster-binding
+subjects:
+- kind: ServiceAccount
+  name: product-recommender-tester
+  namespace: product-recommender-testing
+roleRef:
+  kind: ClusterRole
+  name: product-recommender-tester-cluster-role
+  apiGroup: rbac.authorization.k8s.io

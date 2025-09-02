@@ -15,14 +15,27 @@ validate_url() {
     return 0
 }
 
-# Get URLs dynamically
-export TEST_FRONTEND_URL=$(oc get routes product-recommender-system-frontend -o json | jq -r '"https://" + .spec.host')
-export TEST_FEAST_URL=$(oc get routes feast-feast-recommendation-ui -o json | jq -r '"https://" + .spec.host')
+# Set namespace - use NAMESPACE env var if set, otherwise use current project
+if [ -z "$NAMESPACE" ]; then
+    NAMESPACE=$(oc project -q 2>/dev/null)
+    if [ -z "$NAMESPACE" ]; then
+        echo "❌ Error: Unable to determine current namespace. Please set NAMESPACE environment variable or ensure you're logged into OpenShift."
+        exit 1
+    fi
+    echo "ℹ️  Using current namespace: $NAMESPACE"
+else
+    echo "ℹ️  Using specified namespace: $NAMESPACE"
+fi
+
+# Get URLs dynamically using the namespace
+export TEST_FRONTEND_URL=$(oc get routes product-recommender-system-frontend -n "$NAMESPACE" -o json | jq -r '"https://" + .spec.host')
+export TEST_FEAST_URL=$(oc get routes feast-feast-recommendation-ui -n "$NAMESPACE" -o json | jq -r '"https://" + .spec.host')
 
 # Generate unique timestamp for test emails
 export TEST_TIMESTAMP=$(date +%s)
 
 echo "Testing with:"
+echo "Namespace: $NAMESPACE"
 echo "Frontend URL: $TEST_FRONTEND_URL"
 echo "Feast URL: $TEST_FEAST_URL"
 echo ""

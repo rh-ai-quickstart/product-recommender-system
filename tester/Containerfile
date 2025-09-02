@@ -1,0 +1,31 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies and tools
+RUN apt-get update && \
+    apt-get install -y curl tar jq make bash skopeo && \
+    curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -xz -C /usr/local/bin oc && \
+    chmod +x /usr/local/bin/oc && \
+    # Install Helm
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy helm and tests directories (relative to build context)
+COPY ./helm helm
+COPY tests tests
+
+# Copy the monitoring workflow script
+COPY ./tester/check_image_and_run_tests.sh check_image_and_run_tests.sh
+
+# Install Python dependencies for testing
+RUN pip3 install --upgrade pip && \
+    pip3 install pytest tavern
+
+# Make the scripts executable
+RUN chmod +x ./tests/integration/run_integration_tests.sh
+RUN chmod +x ./check_image_and_run_tests.sh
+
+# Set the default command
+CMD ["/bin/bash", "./check_image_and_run_tests.sh"]
