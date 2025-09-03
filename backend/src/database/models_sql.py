@@ -72,17 +72,21 @@ class Category(Base):
 
 class Product(Base):
     __tablename__ = "products"
-    item_id: Mapped[uuid.UUID] = mapped_column(UUIDType, primary_key=True, default=uuid.uuid4)
+    item_id: Mapped[str] = mapped_column(String, primary_key=True)
     category_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("category.category_id"))
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String)
-    price: Mapped[float] = mapped_column(Float)
+    actual_price: Mapped[float] = mapped_column(Float)
+    discounted_price: Mapped[float] = mapped_column(Float)
+    discount_percentage: Mapped[float] = mapped_column(Float)
     avg_rating: Mapped[float] = mapped_column(Float)
     num_ratings: Mapped[int] = mapped_column(Integer)
-    popular: Mapped[float] = mapped_column(Float)
-    new_arrival: Mapped[float] = mapped_column(Float)
-    on_sale: Mapped[float] = mapped_column(Float)
-    arrival_date: Mapped[Date] = mapped_column(Date)
+    popular: Mapped[float] = mapped_column(Float, nullable=True, default=False)
+    new_arrival: Mapped[float] = mapped_column(Float, nullable=True, default=False)
+    on_sale: Mapped[float] = mapped_column(Float, nullable=True, default=False)
+    arrival_date: Mapped[Date] = mapped_column(Date, nullable=True)
+    img_link: Mapped[str] = mapped_column(String)
+    product_link: Mapped[str] = mapped_column(String)
     category: Mapped["Category"] = relationship("Category", back_populates="products")
 
 

@@ -166,7 +166,6 @@ affinity: {}
 pipelineJobImage: quay.io/rh-ai-quickstart/recommendation-training:latest
 applicationImage: quay.io/rh-ai-quickstart/recommendation-core:latest
 # Note the backend uses recommendation_core as library.
-#frontendBackendImage: quay.io/rh-ai-quickstart/product-recommender-frontend-backend:latest
 frontendBackendImage: quay.io/rh-ai-quickstart/product-recommender-frontend-backend:latest
 
 dbName: product_recommender_system
