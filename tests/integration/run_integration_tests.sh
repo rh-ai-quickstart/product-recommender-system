@@ -74,5 +74,32 @@ fi
 
 echo ""
 
-# Run pytest with the determined target
+# Run pytest with the determined target and capture exit code
 PYTHONPATH=. pytest "$TEST_TARGET" -v
+PYTEST_EXIT_CODE=$?
+
+echo ""
+echo "Pytest exit code: $PYTEST_EXIT_CODE"
+
+if [ $PYTEST_EXIT_CODE -eq 0 ]; then
+    echo "✅ All tests passed successfully!"
+    exit 0
+elif [ $PYTEST_EXIT_CODE -eq 1 ]; then
+    echo "❌ Some tests failed"
+    exit 1
+elif [ $PYTEST_EXIT_CODE -eq 2 ]; then
+    echo "⚠️  Test execution was interrupted"
+    exit 2
+elif [ $PYTEST_EXIT_CODE -eq 3 ]; then
+    echo "💥 Internal pytest error occurred"
+    exit 3
+elif [ $PYTEST_EXIT_CODE -eq 4 ]; then
+    echo "🚫 Pytest was misused"
+    exit 4
+elif [ $PYTEST_EXIT_CODE -eq 5 ]; then
+    echo "📭 No tests were collected"
+    exit 5
+else
+    echo "❓ Unknown pytest exit code: $PYTEST_EXIT_CODE"
+    exit $PYTEST_EXIT_CODE
+fi

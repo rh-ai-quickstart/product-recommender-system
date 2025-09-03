@@ -3,7 +3,8 @@
 set -e
 
 echo "=== Product Recommender System - Image Change Detection and Testing ==="
-echo "Timestamp: $(date)"
+TIMESTAMP=$(date +%s)
+echo $TIMESTAMP
 echo ""
 
 # Function to get image digest
@@ -100,35 +101,41 @@ echo "=== Step 3: Installing Product Recommender System ==="
 cd /app/helm
 if ! make SHELL=/bin/bash install NAMESPACE=$TESTING_NAMESPACE minio.userId=minio minio.password=minio123; then
     echo "❌ Installation failed"
+    curl -X POST -H 'Content-type: application/json' --data "{\"text\": "❌ Prouduct recommender system installation failed at $TIMESTAMP ❌"}" $SLACK_WEBHOOK
     cleanup_and_exit 1
 fi
 
-sleep 120
+# Wait 3 minutes for the pipeline to finish
+sleep 180
 echo "✅ Installation completed successfully"
 echo ""
 
 # Step 4: Run integration tests
 echo "=== Step 4: Running Integration Tests ==="
 cd /app/tests/integration
-if ! NAMESPACE=$TESTING_NAMESPACE bash run_integration_tests.sh; then
+
+# Run integration tests, display in real-time, and capture output
+echo "Running integration tests and capturing output..."
+TEST_OUTPUT=$(NAMESPACE=rec-sys-ofridman bash run_integration_tests.sh 2>&1 | tee /dev/stdout)
+TEST_EXIT_CODE=${PIPESTATUS[0]}
+
+# Send output to Slack
+echo "Sending test results to Slack..."
+# Escape the output for JSON and create a proper payload
+ESCAPED_OUTPUT=$(echo "$TEST_OUTPUT" | jq -Rs .)
+curl -X POST -H 'Content-type: application/json' --data "{\"text\": $ESCAPED_OUTPUT}" $SLACK_WEBHOOK
+
+# Check if tests failed
+if [ $TEST_EXIT_CODE -ne 0 ]; then
     {
         echo "❌ Integration tests failed to run"
-        cleanup_and_exit 1
+        cleanup_and_exit $TEST_EXIT_CODE
     }
+else
+    echo "✅ Integration tests completed successfully"
 fi
 
 # Step 5: Uninstall the system
-echo "=== Step 5: Uninstalling Product Recommender System ==="
-cd /app/helm
-if ! make SHELL=/bin/bash uninstall NAMESPACE=$TESTING_NAMESPACE; then
-    echo "⚠️  Uninstall had some issues, but continuing"
-else
-    echo "✅ Uninstall completed successfully"
-fi
-echo ""
-
-# Clear the trap and exit gracefully
 trap - INT TERM EXIT
-echo "=== Workflow Complete ==="
-echo "Exiting gracefully with code: 0"
-exit 0
+
+cleanup_and_exit 0

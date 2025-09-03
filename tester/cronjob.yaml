@@ -11,8 +11,7 @@ metadata:
 spec:
   # Run every 4 hours, Sunday to Friday (excluding Saturday)
   schedule: "0 */4 * * 0,1-5"
-  # Keep successful jobs for 3 day, failed jobs for 7 days
-  successfulJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 12
   failedJobsHistoryLimit: 7
   # Start the job immediately if it's time to run
   startingDeadlineSeconds: 300
@@ -44,6 +43,11 @@ spec:
             env:
             - name: NAMESPACE
               value: "product-recommender-testing"
+            - name: SLACK_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: slack-webhook
+                  key: url
 
 ---
 apiVersion: v1
