@@ -1,7 +1,7 @@
 """
 This script is not called by the application or any job.
 It was used to generate the category_relationships.parquet file that is
-in turn used to load the category table by the init_backend.py file. 
+in turn used to load the category table by the init_backend.py file.
 This script takes as its source the recommendation_items.parquet file. If the
 recommendations_items.parquet file never changes, there is no need to run this script again.
 """
@@ -20,7 +20,7 @@ try:
     for category_path in df_raw['category'].tolist():
         # Split the path by '|' to get individual categories
         path_components = category_path.split('|')
-        
+
         # Generate parent-child relationships
         for i, category in enumerate(path_components):
             parent_category = path_components[i-1] if i > 0 else None

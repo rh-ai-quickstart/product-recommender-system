@@ -9,15 +9,15 @@ import subprocess
 import uuid
 from collections import deque
 from dataclasses import dataclass
+from pathlib import Path
 
 import pandas as pd
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from database.db import get_engine
 from database.fetch_feast_users import seed_users
 from database.models_sql import Base, Category, Product
-from pathlib import Path
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +56,13 @@ async def populate_products():
         SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
         # This RCTE creates a string path for every root category to its leaf category
-        # It is used during product loading to ensure each product lands in the correct leaf category
-        # based on the category field in the parquet file (e.g., Electronics|WearableTechnology|SmartWatches)
-        # This is necessary since the category/sub category names are not unique (in fact, the category table
-        # and this query generates category paths that have no products, but this is ok for the purposes of
+        # It is used during product loading to ensure
+        # each product lands in the correct leaf category
+        # based on the category field in the parquet file
+        # (e.g., Electronics|WearableTechnology|SmartWatches)
+        # This is necessary since the category/sub category names are not unique
+        # (in fact, the category table and this query generates category
+        # paths that have no products, but this is ok for the purposes of
         # loading the products those spurious category paths are ignored)
         categoryPaths = """
             WITH RECURSIVE CategoryPaths AS (
@@ -75,24 +78,24 @@ async def populate_products():
             FROM CategoryPaths cp join category c2 on cp.leaf_id = c2.category_id
             WHERE cp.category_id NOT IN (SELECT parent_id FROM category WHERE parent_id IS NOT NULL)
             ORDER BY path
-            """
+            """  # noqa: E501
 
         async with SessionLocal() as session:
             categoryPathsResults = (await session.execute(text(categoryPaths))).all()
             path_to_leaf_category_id = {row.path: row.leaf_id for row in categoryPathsResults}
             for _, item in df_items.iterrows():
-                category_id = path_to_leaf_category_id[item['category']]
-                item_id = item['item_id']
-                product_name = item['product_name']
-                discounted_price = item['discounted_price']
-                actual_price = item['actual_price']
-                discount_percentage = item['discount_percentage']
-                rating = item['rating']
-                rating_count = item['rating_count']
-                about_product = item['about_product']
-                arrival_date = item['arrival_date']
-                img_link = item['img_link']
-                product_link = item['product_link']
+                category_id = path_to_leaf_category_id[item["category"]]
+                item_id = item["item_id"]
+                product_name = item["product_name"]
+                discounted_price = item["discounted_price"]
+                actual_price = item["actual_price"]
+                discount_percentage = item["discount_percentage"]
+                rating = item["rating"]
+                rating_count = item["rating_count"]
+                about_product = item["about_product"]
+                arrival_date = item["arrival_date"]
+                img_link = item["img_link"]
+                product_link = item["product_link"]
 
                 session.add(
                     Product(
@@ -107,7 +110,7 @@ async def populate_products():
                         arrival_date=arrival_date,
                         discount_percentage=discount_percentage,
                         img_link=img_link,
-                        product_link=product_link
+                        product_link=product_link,
                     )
                 )
 
@@ -142,10 +145,11 @@ async def populate_categories():
             while len(q):
                 next_category = q.popleft()
                 children_of_next_df = df[df["Parent Category"] == next_category.name]
-                # Technically, this multi-phase path to load the category graph is not correct since 
-                # the category names are not unique. We'd have to 
+                # Technically, this multi-phase path to load the category graph
+                #  is not correct since the category names are not unique. We'd have to
                 # match on the path from the root category to the leaf vs just the leaf's name.
-                # For example, 'Cables' may appear as a subcategory in several category paths (computers, electronics, etc.).
+                # For example, 'Cables' may appear as a subcategory in several category paths
+                # (computers, electronics, etc.).
                 children_of_next = [
                     category_dc(uuid.uuid4(), row["Category"], next_category.category_id)
                     for _, row in children_of_next_df.iterrows()
