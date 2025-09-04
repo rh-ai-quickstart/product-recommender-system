@@ -39,10 +39,24 @@ class User(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class Feedback(BaseModel):
-    userId: str
+class ProductReview(BaseModel):
+    id: int
     productId: str
-    rating: float
+    userId: Optional[str] = None
+    rating: int
+    title: Optional[str] = ""
+    comment: Optional[str] = ""
+    created_at: datetime
+
+
+class ReviewSummary(BaseModel):
+    productId: str
+    count: int
+    avg_rating: float
+
+
+class ProductReviewCreate(BaseModel):
+    rating: int = Field(ge=1, le=5)
     title: Optional[str] = ""
     comment: Optional[str] = ""
 

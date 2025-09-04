@@ -49,3 +49,19 @@ export interface AuthResponse {
 export interface AuthError {
   detail: string;
 }
+
+export interface ProductReview {
+  id: number;
+  productId: string;
+  userId?: string;
+  rating: number;
+  title?: string;
+  comment?: string;
+  created_at: string;
+}
+
+export interface ReviewSummary {
+  productId: string;
+  count: number;
+  avg_rating: number;
+}

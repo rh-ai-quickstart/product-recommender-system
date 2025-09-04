@@ -88,6 +88,8 @@ class Product(Base):
     img_link: Mapped[str] = mapped_column(String)
     product_link: Mapped[str] = mapped_column(String)
     category: Mapped["Category"] = relationship("Category", back_populates="products")
+    # Reviews relationship
+    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="product", cascade="all, delete-orphan")
 
 
 class UserPreference(Base):
@@ -99,3 +101,16 @@ class UserPreference(Base):
     user: Mapped["User"] = relationship("User", back_populates="user_preferences")
 
     category: Mapped["Category"] = relationship("Category")
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    item_id: Mapped[str] = mapped_column(String, ForeignKey("products.item_id"), index=True)
+    user_id: Mapped[str] = mapped_column(String(27), nullable=True, index=True)
+    rating: Mapped[int] = mapped_column(Integer)  # 1..5
+    title: Mapped[str] = mapped_column(Text, nullable=True)
+    content: Mapped[str] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # Products relationship
+    product: Mapped["Product"] = relationship("Product", back_populates="reviews")

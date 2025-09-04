@@ -99,7 +99,21 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-
+---
+{{- if .Values.llm.secret.create }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.llm.secret.name }}
+  labels:
+    {{- include "product-recommender-system.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+type: Opaque
+stringData:
+{{- range $k, $v := .Values.llm.secret.data }}
+  {{ $k }}: {{ $v | quote }}
+{{- end }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service

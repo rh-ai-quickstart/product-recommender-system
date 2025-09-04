@@ -92,6 +92,11 @@ backend:
         secretKeyRef:
           name: pgvector
           key: uri
+    - name: LLM_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: llama-api
+          key: LLM_API_KEY
   # - name: EXAMPLE_VAR
   #   value: "example-value"
 
@@ -107,6 +112,13 @@ backend:
   #     name: backend-config
   pullPolicy: Always
 
+# Special configuration for the LLM API key
+llm:
+  secret:
+    create: true
+    name: llama-api
+    data:
+      LLM_API_KEY: ""
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -166,7 +178,7 @@ affinity: {}
 pipelineJobImage: quay.io/rh-ai-quickstart/recommendation-training:latest
 applicationImage: quay.io/rh-ai-quickstart/recommendation-core:latest
 # Note the backend uses recommendation_core as library.
-frontendBackendImage: quay.io/rh-ai-quickstart/product-recommender-frontend-backend:latest
+frontendBackendImage: quay.io/ganeshmurthy/product-recommender-frontend-backend:latest
 
 dbName: product_recommender_system
 
@@ -196,6 +208,14 @@ env:
       secretKeyRef:
         name: pgvector
         key: dbname
+  - name: USE_LLM_FOR_REVIEWS
+    value: "true"
+  - name: LLM_API_BASE
+    value: "https://llama-3-3-70b-instruct-w8a8-llama-3-70b-quantized.apps.ai-dev04.kni.syseng.devcluster.openshift.com/v1"
+  - name: LLM_MODEL
+    value: "llama-3-3-70b-instruct-w8a8"
+  - name: LLM_TIMEOUT
+    value: "60"
 
 minio:
   env:
