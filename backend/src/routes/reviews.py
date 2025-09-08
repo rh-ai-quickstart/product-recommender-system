@@ -61,15 +61,21 @@ async def get_reviews_summary(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        stmt = select(func.count(Review.id), func.avg(Review.rating)).where(Review.item_id == product_id)
+        stmt = select(func.count(Review.id), func.avg(Review.rating)).where(
+            Review.item_id == product_id
+        )
         count, avg_rating = (await db.execute(stmt)).one_or_none() or (0, None)
-        return ReviewSummary(productId=product_id, count=count or 0, avg_rating=float(avg_rating or 0.0))
+        return ReviewSummary(
+            productId=product_id, count=count or 0, avg_rating=float(avg_rating or 0.0)
+        )
     except Exception as e:
         logger.error(f"Error computing review summary for product {product_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to compute review summary")
 
 
-@router.post("/{product_id}/reviews", response_model=ProductReview, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{product_id}/reviews", response_model=ProductReview, status_code=status.HTTP_201_CREATED
+)
 async def create_review_for_product(
     product_id: str,
     payload: ProductReviewCreate,

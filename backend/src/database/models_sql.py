@@ -89,7 +89,9 @@ class Product(Base):
     product_link: Mapped[str] = mapped_column(String)
     category: Mapped["Category"] = relationship("Category", back_populates="products")
     # Reviews relationship
-    reviews: Mapped[list["Review"]] = relationship("Review", back_populates="product", cascade="all, delete-orphan")
+    reviews: Mapped[list["Review"]] = relationship(
+        "Review", back_populates="product", cascade="all, delete-orphan"
+    )
 
 
 class UserPreference(Base):

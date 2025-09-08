@@ -28,6 +28,7 @@ import os
 import json
 import httpx
 
+
 # Simple, description-aware review generators per rating
 def _generate_review_title(product_name: str, rating: int, keyword: str | None = None) -> str:
     sentiments = {
@@ -47,10 +48,48 @@ def _extract_keywords(text_value: str, max_keywords: int = 5) -> list[str]:
     text_value = text_value.lower()
     words = re.split(r"[^a-z0-9]+", text_value)
     stopwords = {
-        "with", "from", "this", "that", "your", "their", "about", "into", "over", "under",
-        "have", "has", "had", "been", "will", "would", "could", "should", "and", "the", "for",
-        "you", "our", "are", "was", "were", "they", "them", "can", "more", "than", "less",
-        "inch", "inches", "cm", "mm", "made", "make", "makes", "use", "used", "using",
+        "with",
+        "from",
+        "this",
+        "that",
+        "your",
+        "their",
+        "about",
+        "into",
+        "over",
+        "under",
+        "have",
+        "has",
+        "had",
+        "been",
+        "will",
+        "would",
+        "could",
+        "should",
+        "and",
+        "the",
+        "for",
+        "you",
+        "our",
+        "are",
+        "was",
+        "were",
+        "they",
+        "them",
+        "can",
+        "more",
+        "than",
+        "less",
+        "inch",
+        "inches",
+        "cm",
+        "mm",
+        "made",
+        "make",
+        "makes",
+        "use",
+        "used",
+        "using",
     }
     candidates = [w for w in words if len(w) >= 4 and w not in stopwords]
     counts = Counter(candidates)
@@ -67,8 +106,16 @@ def _generate_review_content(name: str, description: str, category_name: str, ra
     keywords = _extract_keywords(description, max_keywords=6)
     # Prefer domain-y aspects when present in description
     default_aspects = [
-        "battery life", "display", "comfort", "sound quality", "fit", "durability",
-        "features", "price", "performance", "design",
+        "battery life",
+        "display",
+        "comfort",
+        "sound quality",
+        "fit",
+        "durability",
+        "features",
+        "price",
+        "performance",
+        "design",
     ]
     # Map common keywords to nicer aspect phrases
     keyword_to_aspect = {
@@ -92,12 +139,23 @@ def _generate_review_content(name: str, description: str, category_name: str, ra
         "fit": "fit and ergonomics",
     }
     keyword_aspects = [keyword_to_aspect.get(k, k) for k in keywords]
-    aspects_pool = keyword_aspects + default_aspects + [category_name.lower() if category_name else ""]
+    aspects_pool = (
+        keyword_aspects + default_aspects + [category_name.lower() if category_name else ""]
+    )
     aspects_pool = [a for a in aspects_pool if a]
-    picked_aspects = random.sample(aspects_pool, k=min(2, len(aspects_pool))) if aspects_pool else ["features"]
+    picked_aspects = (
+        random.sample(aspects_pool, k=min(2, len(aspects_pool))) if aspects_pool else ["features"]
+    )
 
     use_cases = [
-        "daily use", "travel", "workouts", "office", "gaming", "commute", "home setup", "study",
+        "daily use",
+        "travel",
+        "workouts",
+        "office",
+        "gaming",
+        "commute",
+        "home setup",
+        "study",
     ]
     use_case = random.choice(use_cases)
 
@@ -209,11 +267,11 @@ async def _generate_reviews_with_llm(
     max_words = int(os.getenv("LLM_COMMENT_MAX_WORDS", "120"))
 
     if not api_base or not api_key:
-        raise RuntimeError("LLM_API_BASE and LLM_API_KEY must be set when USE_LLM_FOR_REVIEWS is enabled")
+        raise RuntimeError(
+            "LLM_API_BASE and LLM_API_KEY must be set when USE_LLM_FOR_REVIEWS is enabled"
+        )
 
-    sys_prompt = (
-        "You write succinct, realistic e-commerce reviews. Respond ONLY with JSON matching the schema."
-    )
+    sys_prompt = "You write succinct, realistic e-commerce reviews. Respond ONLY with JSON matching the schema."
     constraints = [
         f"Generate exactly {num_reviews} reviews.",
         f"Allowed ratings: {sorted(set(allowed_ratings))}.",
@@ -221,13 +279,15 @@ async def _generate_reviews_with_llm(
         f"Comments {min_words}-{max_words} words; reference relevant aspects from the description.",
     ]
     if required_ratings:
-        constraints.append(f"Ensure at least one review for each of: {sorted(set(required_ratings))}.")
+        constraints.append(
+            f"Ensure at least one review for each of: {sorted(set(required_ratings))}."
+        )
     user_prompt = (
-        "Generate product reviews as JSON.\n"\
-        f"Name: {name}\n"\
-        f"Category: {category_name}\n"\
-        f"Description: {description[:800]}\n"\
-        "Constraints:\n- " + "\n- ".join(constraints) + "\n"\
+        "Generate product reviews as JSON.\n"
+        f"Name: {name}\n"
+        f"Category: {category_name}\n"
+        f"Description: {description[:800]}\n"
+        "Constraints:\n- " + "\n- ".join(constraints) + "\n"
         'Return JSON: {"reviews":[{"rating":1..5,"title":"...","comment":"..."}, ...]}'
     )
 
@@ -318,7 +378,9 @@ async def _load_reviews_from_cache(session: AsyncSession) -> int:
                 if not isinstance(rating, int) or rating < 1 or rating > 5:
                     continue
                 to_insert.append(
-                    Review(item_id=item_id, user_id=None, rating=rating, title=title, content=comment)
+                    Review(
+                        item_id=item_id, user_id=None, rating=rating, title=title, content=comment
+                    )
                 )
 
         if to_insert:
@@ -344,7 +406,9 @@ def _write_reviews_cache(cache_records: list[dict]) -> None:
         os.makedirs(os.path.dirname(cache_path), exist_ok=True)
         with open(cache_path, "w", encoding="utf-8") as f:
             json.dump({"products": cache_records}, f, ensure_ascii=False, indent=2)
-        logger.info(f"Wrote reviews cache file with {len(cache_records)} products to: {cache_path}")
+        logger.info(
+            f"Wrote reviews cache file with {len(cache_records)} products to: {cache_path}"
+        )
     except Exception as ex:
         logger.warning(f"Failed to write reviews cache to {cache_path}: {ex}")
 
@@ -497,7 +561,11 @@ async def populate_categories():
         raise
 
 
-async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_product: int = 10, skip_if_exists: bool = True):
+async def populate_reviews(
+    min_reviews_per_product: int = 5,
+    max_reviews_per_product: int = 10,
+    skip_if_exists: bool = True,
+):
     """
     Generate synthetic, description-aware reviews for each product.
     Ensures ratings range from 1..5 are represented per product, with 5-10 total reviews by default.
@@ -521,7 +589,9 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
         table_empty = (total_existing or 0) == 0
         logger.info(f"[Reviews] Table empty={table_empty} existing_count={total_existing}")
         if skip_if_exists and not table_empty:
-            logger.info("ℹ️ Reviews table has data; will top-up per product to minimum and ensure coverage.")
+            logger.info(
+                "ℹ️ Reviews table has data; will top-up per product to minimum and ensure coverage."
+            )
 
         # If table empty, try loading from JSON cache first
         if table_empty:
@@ -547,9 +617,7 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
         total_products = len(products_rows)
         if total_products > 0:
             positive_k = random.randint(5, min(10, total_products))
-            positive_item_ids = set(
-                random.sample([row[0] for row in products_rows], k=positive_k)
-            )
+            positive_item_ids = set(random.sample([row[0] for row in products_rows], k=positive_k))
         else:
             positive_item_ids = set()
         logger.info(f"[Reviews] Selected {len(positive_item_ids)} positive-only products")
@@ -605,8 +673,12 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                 try:
                     if _use_llm_for_reviews() and (needed > 0):
                         llm_reviews = await _generate_reviews_with_llm(
-                            name, description or "", category_name or "", needed,
-                            allowed_ratings=allowed, required_ratings=missing_ratings,
+                            name,
+                            description or "",
+                            category_name or "",
+                            needed,
+                            allowed_ratings=allowed,
+                            required_ratings=missing_ratings,
                         )
                         if llm_reviews:
                             for r in llm_reviews:
@@ -627,13 +699,21 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                             used_llm = True
                             any_llm_used = True
                 except Exception as ex:
-                    logger.warning(f"LLM review generation failed for positive-only product {item_id}: {ex}")
+                    logger.warning(
+                        f"LLM review generation failed for positive-only product {item_id}: {ex}"
+                    )
 
                 if not used_llm:
                     # Add must-have positives first
-                    for rating in missing_ratings[: max(0, max_reviews_per_product - current_count)]:
-                        title = _generate_review_title(name, rating, (_extract_keywords(description, 1) or [None])[0])
-                        content = _generate_review_content(name, description or "", category_name or "", rating)
+                    for rating in missing_ratings[
+                        : max(0, max_reviews_per_product - current_count)
+                    ]:
+                        title = _generate_review_title(
+                            name, rating, (_extract_keywords(description, 1) or [None])[0]
+                        )
+                        content = _generate_review_content(
+                            name, description or "", category_name or "", rating
+                        )
                         to_add.append(
                             Review(
                                 item_id=item_id,
@@ -643,7 +723,9 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                                 content=content,
                             )
                         )
-                        new_reviews_for_product.append({"rating": rating, "title": title, "comment": content})
+                        new_reviews_for_product.append(
+                            {"rating": rating, "title": title, "comment": content}
+                        )
 
                     remaining_slots = max(
                         0,
@@ -654,8 +736,12 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                     )
                     for _ in range(remaining_slots):
                         rating = random.choice(allowed)
-                        title = _generate_review_title(name, rating, (_extract_keywords(description, 1) or [None])[0])
-                        content = _generate_review_content(name, description or "", category_name or "", rating)
+                        title = _generate_review_title(
+                            name, rating, (_extract_keywords(description, 1) or [None])[0]
+                        )
+                        content = _generate_review_content(
+                            name, description or "", category_name or "", rating
+                        )
                         to_add.append(
                             Review(
                                 item_id=item_id,
@@ -665,7 +751,9 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                                 content=content,
                             )
                         )
-                        new_reviews_for_product.append({"rating": rating, "title": title, "comment": content})
+                        new_reviews_for_product.append(
+                            {"rating": rating, "title": title, "comment": content}
+                        )
                 logger.info(
                     f"[Reviews] product={item_id} name={name} mode=positive-only used={'LLM' if used_llm else 'PY'} newly_added={len(new_reviews_for_product)}"
                 )
@@ -701,8 +789,12 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                 try:
                     if _use_llm_for_reviews() and (needed > 0):
                         llm_reviews = await _generate_reviews_with_llm(
-                            name, description or "", category_name or "", needed,
-                            allowed_ratings=allowed, required_ratings=missing_ratings,
+                            name,
+                            description or "",
+                            category_name or "",
+                            needed,
+                            allowed_ratings=allowed,
+                            required_ratings=missing_ratings,
                         )
                         if llm_reviews:
                             for r in llm_reviews:
@@ -723,13 +815,21 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                             used_llm = True
                             any_llm_used = True
                 except Exception as ex:
-                    logger.warning(f"LLM review generation failed for negative-only product {item_id}: {ex}")
+                    logger.warning(
+                        f"LLM review generation failed for negative-only product {item_id}: {ex}"
+                    )
 
                 if not used_llm:
                     # Add must-have negatives first
-                    for rating in missing_ratings[: max(0, max_reviews_per_product - current_count)]:
-                        title = _generate_review_title(name, rating, (_extract_keywords(description, 1) or [None])[0])
-                        content = _generate_review_content(name, description or "", category_name or "", rating)
+                    for rating in missing_ratings[
+                        : max(0, max_reviews_per_product - current_count)
+                    ]:
+                        title = _generate_review_title(
+                            name, rating, (_extract_keywords(description, 1) or [None])[0]
+                        )
+                        content = _generate_review_content(
+                            name, description or "", category_name or "", rating
+                        )
                         to_add.append(
                             Review(
                                 item_id=item_id,
@@ -739,7 +839,9 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                                 content=content,
                             )
                         )
-                        new_reviews_for_product.append({"rating": rating, "title": title, "comment": content})
+                        new_reviews_for_product.append(
+                            {"rating": rating, "title": title, "comment": content}
+                        )
 
                     remaining_slots = max(
                         0,
@@ -750,8 +852,12 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                     )
                     for _ in range(remaining_slots):
                         rating = random.choice(allowed)
-                        title = _generate_review_title(name, rating, (_extract_keywords(description, 1) or [None])[0])
-                        content = _generate_review_content(name, description or "", category_name or "", rating)
+                        title = _generate_review_title(
+                            name, rating, (_extract_keywords(description, 1) or [None])[0]
+                        )
+                        content = _generate_review_content(
+                            name, description or "", category_name or "", rating
+                        )
                         to_add.append(
                             Review(
                                 item_id=item_id,
@@ -761,7 +867,9 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                                 content=content,
                             )
                         )
-                        new_reviews_for_product.append({"rating": rating, "title": title, "comment": content})
+                        new_reviews_for_product.append(
+                            {"rating": rating, "title": title, "comment": content}
+                        )
                 logger.info(
                     f"[Reviews] product={item_id} name={name} mode=negative-only used={'LLM' if used_llm else 'PY'} newly_added={len(new_reviews_for_product)}"
                 )
@@ -790,8 +898,12 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                 try:
                     if _use_llm_for_reviews() and (needed > 0):
                         llm_reviews = await _generate_reviews_with_llm(
-                            name, description or "", category_name or "", needed,
-                            allowed_ratings=allowed, required_ratings=missing_ratings,
+                            name,
+                            description or "",
+                            category_name or "",
+                            needed,
+                            allowed_ratings=allowed,
+                            required_ratings=missing_ratings,
                         )
                         if llm_reviews:
                             for r in llm_reviews:
@@ -815,9 +927,15 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                     logger.warning(f"LLM review generation failed for product {item_id}: {ex}")
 
                 if not used_llm:
-                    for rating in missing_ratings[: max(0, max_reviews_per_product - current_count)]:
-                        title = _generate_review_title(name, rating, (_extract_keywords(description, 1) or [None])[0])
-                        content = _generate_review_content(name, description or "", category_name or "", rating)
+                    for rating in missing_ratings[
+                        : max(0, max_reviews_per_product - current_count)
+                    ]:
+                        title = _generate_review_title(
+                            name, rating, (_extract_keywords(description, 1) or [None])[0]
+                        )
+                        content = _generate_review_content(
+                            name, description or "", category_name or "", rating
+                        )
                         to_add.append(
                             Review(
                                 item_id=item_id,
@@ -827,7 +945,9 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                                 content=content,
                             )
                         )
-                        new_reviews_for_product.append({"rating": rating, "title": title, "comment": content})
+                        new_reviews_for_product.append(
+                            {"rating": rating, "title": title, "comment": content}
+                        )
 
                     remaining_slots = max(
                         0,
@@ -838,8 +958,12 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                     )
                     for _ in range(remaining_slots):
                         rating = random.randint(1, 5)
-                        title = _generate_review_title(name, rating, (_extract_keywords(description, 1) or [None])[0])
-                        content = _generate_review_content(name, description or "", category_name or "", rating)
+                        title = _generate_review_title(
+                            name, rating, (_extract_keywords(description, 1) or [None])[0]
+                        )
+                        content = _generate_review_content(
+                            name, description or "", category_name or "", rating
+                        )
                         to_add.append(
                             Review(
                                 item_id=item_id,
@@ -849,7 +973,9 @@ async def populate_reviews(min_reviews_per_product: int = 5, max_reviews_per_pro
                                 content=content,
                             )
                         )
-                        new_reviews_for_product.append({"rating": rating, "title": title, "comment": content})
+                        new_reviews_for_product.append(
+                            {"rating": rating, "title": title, "comment": content}
+                        )
                 logger.info(
                     f"[Reviews] product={item_id} name={name} mode=mixed used={'LLM' if used_llm else 'PY'} newly_added={len(new_reviews_for_product)}"
                 )
