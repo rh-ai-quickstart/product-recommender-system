@@ -171,7 +171,7 @@ def generate_candidates(
 
     # Process in batches
     user_encoder.eval()
-    with torch.no_grad():
+    with torch.inference_mode():
         for batch_num, (batch_numerical, batch_categorical, batch_text) in enumerate(dataloader):
             # Move to device
             batch_numerical = batch_numerical.to(device)

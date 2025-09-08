@@ -120,7 +120,7 @@ def tokenize_and_embed_dataframe(df, batch_size=16):
             encoded_input = {k: v.to(device) for k, v in encoded_input.items()}
 
             # Compute embeddings
-            with torch.no_grad():
+            with torch.inference_mode():
                 model_output = model(**encoded_input)
                 # CLS pooling
                 batch_embeddings = model_output[0][:, 0]

@@ -22,7 +22,7 @@ class SearchService:
             return_tensors="pt",
         )
 
-        with torch.no_grad():
+        with torch.inference_mode():
             model_output = self.model(**encoded_input)
             # CLS pooling
             batch_embeddings = model_output[0][:, 0]

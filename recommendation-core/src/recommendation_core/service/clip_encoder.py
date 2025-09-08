@@ -110,10 +110,10 @@ class ClipEncoder:
         inputs = self.tokenizer(
             texts, padding=True, return_tensors="pt", truncation=True
         )
-        with torch.no_grad():
+        with torch.inference_mode():
             return self.model.get_text_features(**inputs)
 
     def encode_images(self, images: list[Image]):
         inputs = self.image_processor(images, return_tensors="pt")
-        with torch.no_grad():
+        with torch.inference_mode():
             return self.model.get_image_features(**inputs)
