@@ -36,8 +36,10 @@ def generate_candidates(
     from recommendation_core.models.data_util import data_preproccess
     from recommendation_core.models.entity_tower import EntityTower
     from recommendation_core.service.clip_encoder import ClipEncoder
+    from torch.utils.data import DataLoader, TensorDataset
 
     logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
 
     with open(models_definition_input.path, "r") as f:
         models_definition: dict = json.load(f)
@@ -60,10 +62,16 @@ def generate_candidates(
 
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = torch.device("cpu")
+    logger.debug("models_definition items")
+    logger.debug(f"models_definition['items_num_numerical']: {models_definition['items_num_numerical']}")
+    logger.debug(f"models_definition['items_num_categorical']: {models_definition['items_num_categorical']}")
     item_encoder = EntityTower(
         models_definition["items_num_numerical"],
         models_definition["items_num_categorical"],
     )
+    logger.debug("models_definition users")
+    logger.debug(f"models_definition['users_num_numerical']: {models_definition['users_num_numerical']}")
+    logger.debug(f"models_definition['users_num_categorical']: {models_definition['users_num_categorical']}")
     user_encoder = EntityTower(
         models_definition["users_num_numerical"],
         models_definition["users_num_categorical"],
@@ -85,6 +93,26 @@ def generate_candidates(
     # Encode the items and users
     proccessed_items = data_preproccess(item_df)
     proccessed_users = data_preproccess(user_df)
+
+    logger.debug("proccessed_items")
+    for key, value in proccessed_items.items():
+        logger.debug(f"proccessed_items[{key}]: {type(value)}")
+        if hasattr(value, 'shape'):
+            logger.debug(f"proccessed_items[{key}]: {value.shape}")
+        else:
+            logger.debug(f"proccessed_items[{key}]: {len(value)}")
+            logger.debug(f"proccessed_items[{key}]: {value}")
+
+    logger.debug("****************************************")
+    logger.debug("proccessed_users")
+    for key, value in proccessed_users.items():
+        logger.debug(f"proccessed_users[{key}]: {type(value)}")
+        if hasattr(value, 'shape'):
+            logger.debug(f"proccessed_users[{key}]: {value.shape}")
+        else:
+            logger.debug(f"proccessed_users[{key}]: {len(value)}")
+            logger.debug(f"proccessed_users[{key}]: {value}")
+
     # Move tensors to device
     proccessed_items = {
         key: value.to(device) if isinstance(value, torch.Tensor) else value
@@ -94,8 +122,81 @@ def generate_candidates(
         key: value.to(device) if isinstance(value, torch.Tensor) else value
         for key, value in proccessed_users.items()
     }
+    # Ensure categorical indices are within embedding vocab
+    def _sanitize_categorical(x, num_embeddings: int, name: str):
+        if not isinstance(x, torch.Tensor):
+            raise ValueError(f"{name} categorical_features must be a Tensor")
+        x = x.long()
+        if num_embeddings > 0:
+            x = torch.clamp(x, 0, num_embeddings - 1)
+        try:
+            logger.debug(
+                f"{name} categorical idx range after clamp: "
+                f"[{int(x.min().item())}, {int(x.max().item())}] "
+                f"vs allowed [0, {num_embeddings-1}]"
+            )
+        except Exception:
+            pass
+        return x
+
+    if hasattr(item_encoder, "categorical_embed") and "categorical_features" in proccessed_items:
+        proccessed_items["categorical_features"] = _sanitize_categorical(
+            proccessed_items["categorical_features"],
+            item_encoder.categorical_embed.num_embeddings,
+            "items",
+        )
+
+    if hasattr(user_encoder, "categorical_embed") and "categorical_features" in proccessed_users:
+        proccessed_users["categorical_features"] = _sanitize_categorical(
+            proccessed_users["categorical_features"],
+            user_encoder.categorical_embed.num_embeddings,
+            "users",
+        )
+
     item_embed_df["embedding"] = item_encoder(**proccessed_items).detach().numpy().tolist()
-    user_embed_df["embedding"] = user_encoder(**proccessed_users).detach().numpy().tolist()
+
+    # Process users in batches
+    BATCH_SIZE = 256  # Adjust based on available memory
+    user_embeddings = []
+
+    # Create tensors for each feature
+    numerical_features = proccessed_users["numerical_features"]
+    categorical_features = proccessed_users["categorical_features"]
+    text_features = proccessed_users["text_features"]
+    url_images = proccessed_users["url_image"]
+
+    # Create dataset and dataloader
+    dataset = TensorDataset(numerical_features, categorical_features, text_features)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE)
+
+    # Process in batches
+    user_encoder.eval()
+    with torch.no_grad():
+        for batch_num, (batch_numerical, batch_categorical, batch_text) in enumerate(dataloader):
+            # Move to device
+            batch_numerical = batch_numerical.to(device)
+            batch_categorical = batch_categorical.to(device)
+            batch_text = batch_text.to(device)
+
+            # Get batch of url_images
+            start_idx = batch_num * BATCH_SIZE
+            end_idx = start_idx + len(batch_numerical)
+            batch_url_images = url_images[start_idx:end_idx]
+
+            # Create batch dict
+            batch_dict = {
+                "numerical_features": batch_numerical,
+                "categorical_features": batch_categorical,
+                "text_features": batch_text,
+                "url_image": batch_url_images
+            }
+
+            # Get embeddings for batch
+            batch_embeddings = user_encoder(**batch_dict).detach().cpu().numpy()
+            user_embeddings.extend(batch_embeddings.tolist())
+
+    # Assign embeddings to dataframe
+    user_embed_df["embedding"] = user_embeddings
 
     # Add the currnet timestamp
     current_time = datetime.now()
@@ -418,6 +519,7 @@ def load_data_from_feast(
     import subprocess
 
     import pandas as pd
+    import tabulate as tb
     from feast import FeatureStore
     from recommendation_core.service.dataset_provider import (
         LocalDatasetProvider,
@@ -427,6 +529,7 @@ def load_data_from_feast(
     import logging
 
     logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
 
     logger.info("Starting load_data_from_feast")
 
@@ -476,17 +579,44 @@ def load_data_from_feast(
 
     if table_exists(engine, "users"):
         query_users = "SELECT user_id, email as user_name, preferences, signup_date FROM users"
-        stream_users_df = pd.read_sql(query_users, engine)
+        try:
+            stream_users_df = pd.read_sql(query_users, engine)
+        except Exception as e:
+            logger.error(f"Error reading users from database: {e}")
+            stream_users_df = pd.DataFrame()
 
-        user_df = pd.concat([user_df, stream_users_df], axis=0)
+
+        logger.debug("Showing head of tables")
+        logger.debug(f"stream_users_df: \n{tb.tabulate(stream_users_df.head(), headers='keys', tablefmt='grid')}")
+        logger.debug("****************************************")
+        logger.debug(f"user_df: \n{tb.tabulate(user_df.head(), headers='keys', tablefmt='grid')}")
+
+
+        if not stream_users_df.empty:
+            logger.debug(f"user_df columns: {user_df.columns}")
+            logger.debug(f"stream_users_df columns: {stream_users_df.columns}")
+            stream_users_df['signup_date'] = pd.to_datetime(stream_users_df['signup_date'])
+            logger.info(f"Adding {len(stream_users_df)} users to user_df")
+            user_df = pd.concat([user_df, stream_users_df], axis=0)
+            logger.debug(f"user_df columns: {user_df.columns}")
+        else:
+            logger.info("No new users found in database")
 
     if table_exists(engine, "stream_interaction"):
         query_positive = "SELECT * FROM stream_interaction"
-        stream_positive_inter_df = pd.read_sql(query_positive, engine).rename(
-            columns={"timestamp": "event_timestamp"}
-        )
+        try:
+            stream_positive_inter_df = pd.read_sql(query_positive, engine).rename(
+                columns={"timestamp": "event_timestamp"}
+            )
+        except Exception as e:
+            logger.error(f"Error reading positive interactions from database: {e}")
+            stream_positive_inter_df = pd.DataFrame()
 
-        interaction_df = pd.concat([interaction_df, stream_positive_inter_df], axis=0)
+        if not stream_positive_inter_df.empty:
+            logger.info(f"Adding {len(stream_positive_inter_df)} positive interactions to interaction_df")
+            interaction_df = pd.concat([interaction_df, stream_positive_inter_df], axis=0)
+        else:
+            logger.info("No new positive interactions found in database")
 
     # Pass artifacts
     logger.info("Saving artifacts to parquet files")
@@ -664,7 +794,6 @@ def batch_recommendation():
     generate_candidates_task.set_cpu_limit("3000m")
     generate_candidates_task.set_memory_limit("3000Mi")
 
-    generate_candidates_task.set_caching_options(False)
 
 
 if __name__ == "__main__":
