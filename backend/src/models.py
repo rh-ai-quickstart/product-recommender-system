@@ -107,3 +107,15 @@ class Order(BaseModel):
     total_amount: float
     order_date: datetime
     status: str
+
+
+class CategoryTree(BaseModel):
+    category_id: str
+    name: str
+    subcategories: List['CategoryTree'] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# This is needed for the forward reference in CategoryTree
+CategoryTree.model_rebuild()
