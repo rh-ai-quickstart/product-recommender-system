@@ -1,15 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { setPreferences, fetchNewPreferences } from '../services/preferences';
-import { createNewUserRecommendations } from '../services/recommendations';
-import type { PreferencesRequest } from '../services/preferences';
+import { setPreferences, getCategories } from '../services/preferences';
+import type { PreferencesRequest, CategoryTree } from '../types';
 import { useNavigate } from '@tanstack/react-router';
 
-export const usePreferences = () => {
-  return useQuery<string[]>({
-    queryKey: ['preferences'],
+export const useCategoryTree = () => {
+  return useQuery<CategoryTree[]>({
+    queryKey: ['categoryTree'],
     queryFn: async () => {
-      const result = await fetchNewPreferences();
-      return result.split('|'); // Convert pipe-separated string to array
+      const result = await getCategories();
+      console.log('Category tree:', result);
+      return result; // Return full CategoryTree objects
     },
     staleTime: 10 * 60 * 1000,
   });
@@ -26,26 +26,10 @@ export const useSetPreferences = () => {
       // Update user data in cache with new preferences
       queryClient.setQueryData(['currentUser'], authResponse.user);
 
-      // Create new user recommendations via ML model
-      try {
-        console.log('Triggering new user recommendation generation...');
-        await createNewUserRecommendations(10);
-        console.log('New user recommendations created successfully');
-
-        // Invalidate recommendations cache to force refresh
-        queryClient.invalidateQueries({
-          queryKey: ['recommendations', 'personalized'],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['recommendations', 'new-user'],
-        });
-      } catch (error) {
-        console.warn(
-          'Failed to create initial recommendations via ML model:',
-          error
-        );
-        console.log('Will fall back to existing user recommendations endpoint');
-      }
+      // Invalidate recommendations cache to force refresh with new category-based recommendations
+      queryClient.invalidateQueries({
+        queryKey: ['recommendations'],
+      });
 
       // Get redirect path from URL params or default to home
       const searchParams = new URLSearchParams(window.location.search);

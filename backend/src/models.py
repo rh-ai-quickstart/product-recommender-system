@@ -34,6 +34,7 @@ class User(BaseModel):
     gender: str
     signup_date: date
     preferences: str
+    user_preferences: Optional[List["CategoryTree"]] = None
     views: Optional[List["Product"]] = None  # quotes avoid circular import issues
 
     model_config = ConfigDict(from_attributes=True)
@@ -79,7 +80,7 @@ class SignUpRequest(BaseModel):
 
 
 class PreferencesRequest(BaseModel):
-    preferences: str
+    category_ids: List[str]
 
 
 class AuthResponse(BaseModel):

@@ -25,6 +25,7 @@ export interface User {
   gender: string;
   signup_date: string; // Changed from date to string to match backend
   preferences: string;
+  user_preferences?: CategoryTree[]; // Added structured preferences
   views?: string[]; // Added optional views array
 }
 
@@ -69,4 +70,21 @@ export interface ReviewSummary {
 export interface ReviewSummarization {
   productId: string;
   summary: string;
+}
+
+export interface PreferencesRequest {
+  category_ids: string[];
+}
+
+// Category-related interfaces
+export interface CategoryTree {
+  category_id: string;
+  name: string;
+  subcategories: CategoryTree[]; // Recursive structure for nested categories
+}
+
+// Query parameters for top products endpoint
+export interface TopProductsParams {
+  limit?: number; // 1-100, default 10
+  include_subcategories?: boolean; // default true
 }

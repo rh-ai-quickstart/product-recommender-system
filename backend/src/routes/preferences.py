@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, Query, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text, desc
+from sqlalchemy import select, func, text, desc, delete
 from typing import List
 import logging
+import uuid
 
 from database.db import get_db
-from database.models_sql import User, Category, Product as SQLProduct, StreamInteraction
+from database.models_sql import User, Category, Product as SQLProduct, StreamInteraction, UserPreference
 from models import AuthResponse, PreferencesRequest, CategoryTree, Product
 from models import User as UserResponse
 from routes.auth import create_access_token, get_current_user
@@ -26,24 +27,97 @@ async def set_preferences(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    # Update DB
-    user.preferences = prefs.preferences
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
+    try:
+        # === STEP 1: Validate category IDs exist ===
+        if prefs.category_ids:
+            # Verify all category IDs exist in database
+            category_check = await db.execute(
+                select(Category.category_id)
+                .where(Category.category_id.in_([uuid.UUID(cid) for cid in prefs.category_ids]))
+            )
+            valid_categories = [str(cat.category_id) for cat in category_check.all()]
 
-    return AuthResponse(
-        user=UserResponse(
-            user_id=user.user_id,
-            email=user.email,
-            age=user.age,
-            gender=user.gender,
-            signup_date=user.signup_date,
-            preferences=user.preferences,
-            views=[],
-        ),
-        token=create_access_token(subject=str(user.user_id)),  # Optional: refresh token
-    )
+            if len(valid_categories) != len(prefs.category_ids):
+                invalid_ids = set(prefs.category_ids) - set(valid_categories)
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid category IDs: {list(invalid_ids)}"
+                )
+
+        # === STEP 2: Clear existing UserPreference records ===
+        await db.execute(
+            delete(UserPreference).where(UserPreference.user_id == user.user_id)
+        )
+
+        # === STEP 3: Create new UserPreference records ===
+        if prefs.category_ids:
+            new_preferences = [
+                UserPreference(
+                    user_id=user.user_id,
+                    category_id=uuid.UUID(category_id)
+                )
+                for category_id in prefs.category_ids
+            ]
+            db.add_all(new_preferences)
+
+        # === STEP 4: Update legacy string field for backward compatibility ===
+        if prefs.category_ids:
+            # Get category names for legacy string field
+            category_names_query = await db.execute(
+                select(Category.name)
+                .where(Category.category_id.in_([uuid.UUID(cid) for cid in prefs.category_ids]))
+            )
+            category_names = [cat.name for cat in category_names_query.all()]
+            user.preferences = "|".join(category_names)
+        else:
+            user.preferences = ""
+
+        # === STEP 5: Commit all changes ===
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+        # === STEP 6: Build user_preferences for response ===
+        if prefs.category_ids:
+            user_prefs_query = await db.execute(
+                select(Category.category_id, Category.name, Category.parent_id)
+                .join(UserPreference, UserPreference.category_id == Category.category_id)
+                .where(UserPreference.user_id == user.user_id)
+            )
+            user_categories = user_prefs_query.all()
+
+            user_preferences_response = [
+                CategoryTree(
+                    category_id=str(cat.category_id),
+                    name=cat.name,
+                    subcategories=[]
+                )
+                for cat in user_categories
+            ]
+        else:
+            user_preferences_response = []
+
+        return AuthResponse(
+            user=UserResponse(
+                user_id=user.user_id,
+                email=user.email,
+                age=user.age,
+                gender=user.gender,
+                signup_date=user.signup_date,
+                preferences=user.preferences,
+                user_preferences=user_preferences_response,
+                views=[],
+            ),
+            token=create_access_token(subject=str(user.user_id)),
+        )
+
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error setting preferences for user {user.user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save preferences")
 
 
 # GET /users/preferences
@@ -53,7 +127,7 @@ async def set_preferences(
     status_code=status.HTTP_200_OK,
 )
 async def get_preferences(user: User = Depends(get_current_user)):
-    return user.preferences
+    return user.user_preferences
 
 
 # GET /users/categories
