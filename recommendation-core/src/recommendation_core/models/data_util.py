@@ -221,30 +221,64 @@ def data_preproccess(df: pd.DataFrame):
         "url_image": url_image_df.values.tolist(),  # shape: (len(df), n_col)
     }
 
+    # The returned dictionary is used to create a UserItemMagnitudeDataset.
+    # The proccceeded tensor dict will conceptually look like this:
+    # item_dict = {
+    # "numerical_features": torch.Tensor([
+    #     [120.50, 4.5],  # Item 1: price, rating
+    #     [15.00, 4.8],   # Item 2: price, rating
+    #     [299.99, 4.9]   # Item 3: price, rating
+    # ]),
+    # "categorical_features": torch.Tensor([
+    #     [5],  # Item 1: brand_id
+    #     [12], # Item 2: brand_id
+    #     [8]   # Item 3: brand_id
+    # ]).to(int),
+    # "text_features": torch.Tensor([
+    #     [[0.1, 0.8, ...]],  # Item 1: name_embedding
+    #     [[0.4, 0.2, ...]],  # Item 2: name_embedding
+    #     [[0.9, 0.5, ...]]   # Item 3: name_embedding
+    # ]),
+    # "url_image": [
+    #     ["/.../kettle.png"],
+    #     ["/.../usbc.png"],
+    #     ["/.../stove.png"]
+    # ]
+    #}   
     return procceed_tensor_dict
 
 
-def preproccess_pipeline(
-    item_df: pd.DataFrame, user_df: pd.DataFrame, interaction_df: pd.DataFrame
+def preprocess_pipeline(
+    items_df: pd.DataFrame, users_df: pd.DataFrame, interactions_df: pd.DataFrame
 ):
-    # Align the intercations with the users and items
-    item_df, user_df, inter_df = _align_intercation(item_df, user_df, interaction_df)
+    # Align the interactions with the users and items
+    items_df, users_df, inter_df = _align_and_clean_interactions(items_df, users_df, interactions_df)
     magnitude = torch.Tensor(_calculate_interaction_loss(inter_df).values)
 
-    item_dict = data_preproccess(item_df)
-    user_dict = data_preproccess(user_df)
+    item_dict = data_preproccess(items_df)
+    user_dict = data_preproccess(users_df)
 
     return UserItemMagnitudeDataset(item_dict, user_dict, magnitude)
 
 
-def _align_intercation(
-    item_df: pd.DataFrame, user_df: pd.DataFrame, interaction_df: pd.DataFrame
+def _align_and_clean_interactions(
+    items_df: pd.DataFrame, users_df: pd.DataFrame, interactions_df: pd.DataFrame
 ):
-    merged_df = interaction_df.merge(item_df, on="item_id").merge(user_df, on="user_id")
+    # Join interactions to items (on item_id) and then to users (on user_id)
+    # to ensure each training row has aligned item and user features for that
+    # interaction. Inner joins drop orphaned interactions with missing keys.
+    # So, this merge is being done to have clean data for downstream preprocessing.
+    merged_df = interactions_df.merge(items_df, on="item_id").merge(users_df, on="user_id")
+    # During merging, if constituents being merged contain similar column names,
+    # pandas suffixes duplicate columns (e.g., rating_x from
+    # interactions and rating_y from items). We rename back to the expected
+    # schema (no suffix) and slice the merged frame to exactly match the
+    # original columns for each view, so downstream preprocessing remains
+    # consistent with the source schemas.
     return (
-        merged_df.rename(columns={"rating_y": "rating"})[item_df.columns],
-        merged_df[user_df.columns],
-        merged_df.rename(columns={"rating_x": "rating"})[interaction_df.columns],
+        merged_df.rename(columns={"rating_y": "rating"})[items_df.columns],
+        merged_df[users_df.columns],
+        merged_df.rename(columns={"rating_x": "rating"})[interactions_df.columns],
     )
 
 

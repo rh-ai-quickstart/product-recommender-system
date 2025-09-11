@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from recommendation_core.models.data_util import (UserItemMagnitudeDataset,
-                                                  preproccess_pipeline)
+                                                  preprocess_pipeline)
 from recommendation_core.models.entity_tower import EntityTower
 from recommendation_core.models.two_tower import TwoTowerModel
 
@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 def create_and_train_two_tower(
-    item_df: pd.DataFrame,
-    user_df: pd.DataFrame,
-    interaction_df: pd.DataFrame,
+    items_df: pd.DataFrame,
+    users_df: pd.DataFrame,
+    interactions_df: pd.DataFrame,
     return_epoch_losses: bool = False,
     n_epochs: int = 10,
     return_model_definition: bool = False,
 ):
-    dataset = preproccess_pipeline(item_df, user_df, interaction_df)
+    dataset = preprocess_pipeline(items_df, users_df, interactions_df)
     models_definition = {
         "items_num_numerical": dataset.items_num_numerical,
         "items_num_categorical": dataset.items_num_categorical,
@@ -46,14 +46,14 @@ def create_and_train_two_tower(
 def train_two_tower(
     item_tower: EntityTower,
     user_tower: EntityTower,
-    item_df: pd.DataFrame,
-    user_df: pd.DataFrame,
-    interaction_df_pos: pd.DataFrame,
+    items_df: pd.DataFrame,
+    users_df: pd.DataFrame,
+    interactions_df_pos: pd.DataFrame,
     return_epoch_losses: bool = False,
     n_epochs: int = 10,
 ):
 
-    dataset = preproccess_pipeline(item_df, user_df, interaction_df_pos)
+    dataset = preprocess_pipeline(items_df, users_df, interactions_df_pos)
     two_tower_model = TwoTowerModel(item_tower, user_tower)
 
     epoch_losses = _train(dataset, two_tower_model, n_epochs=n_epochs)

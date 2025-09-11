@@ -44,17 +44,6 @@ def generate_candidates(
     with open(models_definition_input.path, "r") as f:
         models_definition: dict = json.load(f)
 
-    result = subprocess.run(
-        ["/bin/bash", "-c", "ls && ./entry_point.sh"],
-        capture_output=True,  # Capture stdout and stderr
-        text=True,  # Return output as strings (not bytes)
-        # check=True           # Raise an error if the command fails
-    )
-    # logger.info the stdout
-    logger.info(f"Standard Output: {result.stdout}")
-
-    # logger.info the stderr (if any)
-    logger.info(f"Standard Error: {result.stderr}")
     with open("src/recommendation_core/feature_repo/feature_store.yaml", "r") as file:
         logger.info(file.read())
 
@@ -318,12 +307,12 @@ def train_model(
     logger.debug(f"user_df_input.path = {user_df_input.path}")
     logger.debug(f"interaction_df_input.path = {interaction_df_input.path}")
 
-    item_df = pd.read_parquet(item_df_input.path)
-    user_df = pd.read_parquet(user_df_input.path)
-    interaction_df = pd.read_parquet(interaction_df_input.path)
+    items_df = pd.read_parquet(item_df_input.path)
+    users_df = pd.read_parquet(user_df_input.path)
+    interactions_df = pd.read_parquet(interaction_df_input.path)
 
     item_encoder, user_encoder, models_definition = create_and_train_two_tower(
-        item_df, user_df, interaction_df, return_model_definition=True
+        items_df=items_df, users_df=users_df, interactions_df=interactions_df, return_model_definition=True
     )
 
     torch.save(item_encoder.state_dict(), item_output_model.path)
@@ -532,18 +521,6 @@ def load_data_from_feast(
     logger.setLevel(logging.DEBUG)
 
     logger.info("Starting load_data_from_feast")
-
-    result = subprocess.run(
-        ["/bin/bash", "-c", "ls && ./entry_point.sh"],
-        capture_output=True,  # Capture stdout and stderr
-        text=True,  # Return output as strings (not bytes)
-    )
-
-    # logger.info the stdout
-    logger.info(f"Standard Output: {result.stdout}")
-
-    # logger.info the stderr (if any)
-    logger.info(f"Standard Error: {result.stderr}")
 
     with open("src/recommendation_core/feature_repo/feature_store.yaml", "r") as file:
         logger.info(file.read())
