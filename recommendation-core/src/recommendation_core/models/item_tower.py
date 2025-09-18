@@ -1,10 +1,18 @@
 import torch
 import torch.nn as nn
+import logging
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 class ItemTower(nn.Module):
     def __init__(self, d_model=64, category_count=5, subcategory_count=25):
         super().__init__()
+        logger.info("This is actually used!")
+        
         # Define ratios for each feature.
         ratios = {
             "category": 3,

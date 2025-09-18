@@ -139,19 +139,19 @@ def generate_candidates(
             pass
         return x
 
-    if hasattr(item_encoder, "categorical_embed") and "categorical_features" in proccessed_items:
-        proccessed_items["categorical_features"] = _sanitize_categorical(
-            proccessed_items["categorical_features"],
-            item_encoder.categorical_embed.num_embeddings,
-            "items",
-        )
+    #if hasattr(item_encoder, "categorical_embed") and "categorical_features" in proccessed_items:
+    #    proccessed_items["categorical_features"] = _sanitize_categorical(
+    #        proccessed_items["categorical_features"],
+    #        item_encoder.categorical_embed.num_embeddings,
+    #        "items",
+    #    )
 
-    if hasattr(user_encoder, "categorical_embed") and "categorical_features" in proccessed_users:
-        proccessed_users["categorical_features"] = _sanitize_categorical(
-            proccessed_users["categorical_features"],
-            user_encoder.categorical_embed.num_embeddings,
-            "users",
-        )
+    #if hasattr(user_encoder, "categorical_embed") and "categorical_features" in proccessed_users:
+    #    proccessed_users["categorical_features"] = _sanitize_categorical(
+    #        proccessed_users["categorical_features"],
+    #        user_encoder.categorical_embed.num_embeddings,
+    #        "users",
+    #    )
 
     item_embed_df["embedding"] = item_encoder(**proccessed_items).detach().numpy().tolist()
 
@@ -161,21 +161,23 @@ def generate_candidates(
 
     # Create tensors for each feature
     numerical_features = proccessed_users["numerical_features"]
-    categorical_features = proccessed_users["categorical_features"]
+    #categorical_features = proccessed_users["categorical_features"]
     text_features = proccessed_users["text_features"]
     url_images = proccessed_users["url_image"]
 
     # Create dataset and dataloader
-    dataset = TensorDataset(numerical_features, categorical_features, text_features)
+    #dataset = TensorDataset(numerical_features, categorical_features, text_features)
+    dataset = TensorDataset(numerical_features, text_features)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE)
 
     # Process in batches
     user_encoder.eval()
     with torch.inference_mode():
-        for batch_num, (batch_numerical, batch_categorical, batch_text) in enumerate(dataloader):
+        #for batch_num, (batch_numerical, batch_categorical, batch_text) in enumerate(dataloader):
+        for batch_num, (batch_numerical, batch_text) in enumerate(dataloader):
             # Move to device
             batch_numerical = batch_numerical.to(device)
-            batch_categorical = batch_categorical.to(device)
+            #batch_categorical = batch_categorical.to(device)
             batch_text = batch_text.to(device)
 
             # Get batch of url_images
@@ -186,7 +188,7 @@ def generate_candidates(
             # Create batch dict
             batch_dict = {
                 "numerical_features": batch_numerical,
-                "categorical_features": batch_categorical,
+                #"categorical_features": batch_categorical,
                 "text_features": batch_text,
                 "url_image": batch_url_images
             }

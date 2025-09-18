@@ -8,6 +8,10 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,19 +30,24 @@ class UserItemMagnitudeDataset(Dataset):
 
         # Verify that all tensors have consistent number of samples
         n_samples = len(magnitude)
+        logger.info(f"Number of samples (n_samples): {n_samples}")
         for user_tensor in users.values():
+            logger.info(f"Number of users: {len(user_tensor)}")
             assert len(user_tensor) == n_samples, "User tensor size mismatch"
         for item_tensor in items.values():
+            logger.info(f"Number of items: {len(item_tensor)}")
             assert len(item_tensor) == n_samples, "Item tensor size mismatch"
 
         self._items_num_numerical = items["numerical_features"].shape[1]
         self._users_num_numerical = users["numerical_features"].shape[1]
-        self._items_num_categorical = torch.unique(
-            items["categorical_features"]
-        ).numel()
-        self._users_num_categorical = torch.unique(
-            users["categorical_features"]
-        ).numel()
+        self._items_num_categorical = 0
+        self._users_num_categorial = 0
+        #self._items_num_categorical = torch.unique(
+        #    items["categorical_features"]
+        #).numel()
+        #self._users_num_categorical = torch.unique(
+        #    users["categorical_features"]
+        #).numel()
 
     def __len__(self):
         """Returns the total number of samples"""
@@ -150,7 +159,7 @@ def data_preproccess(df: pd.DataFrame):
         [
             col
             for col in df.columns
-            if not col.endswith("timestamp") and not col.endswith("_id")
+            if not col.endswith("timestamp") and not col.endswith("_id") and col != 'user_name'
         ]
     ]
 
@@ -166,26 +175,42 @@ def data_preproccess(df: pd.DataFrame):
     text_columns = list(set(df.columns) - set(numerical_df.columns))
 
     # Image features
+    # The original check looked at whether the column value started with 'http' in order to determine
+    # whether it is a URL column. When we switched to relative URLs to serve the images from the web directory
+    # structure in the repo directly, this defeated this check. Ideally these metadata decisions are made more
+    # robustly using explicit metadata provided to the algorithm since a heurist check is inherently brittle,
+    # but such a change would be too disruptive at this point.
     url_columns = [
         col
         for col in text_columns
-        if (df[col].astype(str).str.lower().str[:4] == "http").mean() > 0.5
+        if (df[col].astype(str).apply(lambda x: x.lower().endswith('.png') or x.lower().startswith('http'))).mean() > 0.5
     ]
     url_image_df = df[url_columns].astype(str)
 
     # Calculate the percentage of unique values for each column
-    unique_percentages = df[
-        [col for col in text_columns if col not in url_columns]
-    ].nunique()
-    unique_percentages = unique_percentages / unique_percentages.max()
+    #unique_percentages = df[
+    #    [col for col in text_columns if col not in url_columns]
+    #].nunique()
+    #Modified this code below to compare number of unique rows to the total number of rows in the df
+    #unique_percentages = unique_percentages / unique_percentages.max()
+    #unique_percentages = unique_percentages / len(df)
+    
+    #logger.info(f"Number of records in target dataframe: {len(df)}")
+    #logger.info(f"Unique percentages: {unique_percentages}")
+
     # Filter columns where unique values are less than 20% of total values
-    categorical_columns = unique_percentages[unique_percentages < 0.8].index.tolist()
-    category_df = df[categorical_columns]
-    logger.info(f"unqiue precentege: {unique_percentages}")
+    #categorical_columns = unique_percentages[unique_percentages < 0.8].index.tolist()
+    #category_df = df[categorical_columns]
+    #logger.info(f"unique percentage: {unique_percentages}")
     # Text features
+    #text_columns = [
+    #    col for col in text_columns if col not in categorical_columns + url_columns
+    #]
+
     text_columns = [
-        col for col in text_columns if col not in categorical_columns + url_columns
+        col for col in text_columns if col not in url_columns
     ]
+
     text_df = df[text_columns]
 
     def df_to_tensor(df: pd.DataFrame):
@@ -210,11 +235,16 @@ def data_preproccess(df: pd.DataFrame):
         numeric_df = df.apply(lambda x: x.map(category_to_code))
         return numeric_df
 
+    logger.info(f"Numeric columns: {list(numerical_df.columns)}")
+    #logger.info(f"Categorical column labels: {list(category_df.columns)}")
+    logger.info(f"Text columns: {list(text_df.columns)}")
+
     procceed_tensor_dict = {
         "numerical_features": df_to_tensor(numerical_df),  # shape: (len(df), n_col)
-        "categorical_features": df_to_tensor(parse_categorical_df(category_df)).to(
-            int
-        ),  # shape: (len(df), n_col)
+        #"categorical_features": torch.empty(0,1),
+        #"categorical_features": df_to_tensor(parse_categorical_df(category_df)).to(
+        #    int
+        #),  # shape: (len(df), n_col)
         "text_features": tokenize_and_embed_dataframe(
             text_df
         ),  # shape: (len(df), n_col, dim)
@@ -231,7 +261,13 @@ def preproccess_pipeline(
     item_df, user_df, inter_df = _align_intercation(item_df, user_df, interaction_df)
     magnitude = torch.Tensor(_calculate_interaction_loss(inter_df).values)
 
+    logger.info(f"Number of rows in the item_df is: {len(item_df)}")
+    logger.info(f"Number of rows in the user_df is: {len(user_df)}")
+    logger.info(f"Number of rows in the inter_df is: {len(inter_df)}")
+
+    logger.info("Calling data_preproccess for items.")
     item_dict = data_preproccess(item_df)
+    logger.info("Calling data_preproccess for users.")
     user_dict = data_preproccess(user_df)
 
     return UserItemMagnitudeDataset(item_dict, user_dict, magnitude)

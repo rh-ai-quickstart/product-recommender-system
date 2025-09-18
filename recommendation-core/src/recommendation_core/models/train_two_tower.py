@@ -24,12 +24,17 @@ def create_and_train_two_tower(
     dataset = preproccess_pipeline(item_df, user_df, interaction_df)
     models_definition = {
         "items_num_numerical": dataset.items_num_numerical,
-        "items_num_categorical": dataset.items_num_categorical,
+        "items_num_categorical": 0,
+        #"items_num_categorical": dataset.items_num_categorical,
         "users_num_numerical": dataset.users_num_numerical,
-        "users_num_categorical": dataset.users_num_categorical,
+        "users_num_categorical": 0,
+        #"users_num_categorical": dataset.users_num_categorical,
     }
-    item_tower = EntityTower(dataset.items_num_numerical, dataset.items_num_categorical)
-    user_tower = EntityTower(dataset.users_num_numerical, dataset.users_num_categorical)
+    #item_tower = EntityTower(dataset.items_num_numerical, dataset.items_num_categorical)
+    #user_tower = EntityTower(dataset.users_num_numerical, dataset.users_num_categorical)
+    item_tower = EntityTower(dataset.items_num_numerical, 0)
+    user_tower = EntityTower(dataset.users_num_numerical, 0)
+
     two_tower_model = TwoTowerModel(item_tower, user_tower)
 
     epoch_losses = _train(dataset, two_tower_model, n_epochs=n_epochs)

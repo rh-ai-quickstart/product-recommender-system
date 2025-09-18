@@ -9,7 +9,7 @@ class EntityTower(nn.Module):
     def __init__(
         self,
         num_numerical: int = 1,
-        num_of_categories: int = 1,
+        num_of_categories: int = 0,
         d_model: int = 64,
         text_embed_dim: int = 384,
         image_embed_dim: int = 384,
@@ -60,7 +60,7 @@ class EntityTower(nn.Module):
     def forward(
         self,
         numerical_features: Tensor,
-        categorical_features: Tensor,
+        #categorical_features: Tensor,
         text_features: Tensor,
         url_image: Tensor,
     ):
@@ -69,7 +69,6 @@ class EntityTower(nn.Module):
 
         Args:
             numerical_features (Tensor): Numerical data with        shape: (n_samples, n_col)
-            categorical_features (Tensor): Categorical data with    shape: (n_samples, n_col).
             text_features (Tensor): Text data embeddings with       shape: (n_samples, n_col, dim).
             url_image (Tensor): Image data (e.g., from URLs) with   shape: (n_samples, n_col).
         """
@@ -83,11 +82,11 @@ class EntityTower(nn.Module):
             )  # n_samples, numeric_dim
             x = torch.cat([x, x_numeric], dim=-1)
         # Process categorical.
-        if self.num_of_categories > 0:
-            x_categorical = self.categorical_embed(categorical_features).squeeze(
-                1
-            )  # n_samples, cat_dim
-            x = torch.cat([x, x_categorical], dim=-1)
+        #if self.num_of_categories > 0:
+        #    x_categorical = self.categorical_embed(categorical_features).squeeze(
+        #        1
+        #    )  # n_samples, cat_dim
+        #    x = torch.cat([x, x_categorical], dim=-1)
         # Proccess image
         # if self.image_dim != 0:
         #     pass # TODO implement mt later
