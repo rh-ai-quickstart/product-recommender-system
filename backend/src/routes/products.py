@@ -14,7 +14,8 @@ except ImportError:
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.db import get_db
-from models import InteractionType, Product
+from database.models_sql import Product as ProductSQL
+from models import InteractionType, Product, ProductReview
 from routes.auth import get_current_user  # to resolve JWT user
 from services.database_service import db_service  # Use global instance
 from services.feast.feast_service import FeastService
@@ -74,6 +75,14 @@ async def record_product_click(
     return
 
 
+async def get_product_reviews(session: AsyncSession, product_id: str):
+    product = await session.get(ProductSQL, product_id)
+    if product is None:
+        return []
+    await session.refresh(product, attribute_names=["reviews"])
+    return product.reviews
+
+
 class ImageRecommendationRequest_link(BaseModel):
     image_url: str
     num_recommendations: int = 10
@@ -123,3 +132,20 @@ async def recommend_for_image_file(
     except Exception as e:
         logger.error(f"Error getting recommendations for image file {image_file.filename}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/products/{product_id}/reviews/all", response_model=List[ProductReview])
+async def list_all_product_reviews(product_id: str, db: AsyncSession = Depends(get_db)):
+    reviews = await get_product_reviews(db, product_id)
+    return [
+        ProductReview(
+            id=r.id,
+            productId=r.item_id,
+            userId=r.user_id,
+            rating=r.rating,
+            title=r.title or "",
+            comment=r.content or "",
+            created_at=r.created_at,
+        )
+        for r in reviews
+    ]
