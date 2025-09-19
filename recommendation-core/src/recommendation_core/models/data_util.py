@@ -194,7 +194,7 @@ def data_preproccess(df: pd.DataFrame):
     #Modified this code below to compare number of unique rows to the total number of rows in the df
     #unique_percentages = unique_percentages / unique_percentages.max()
     #unique_percentages = unique_percentages / len(df)
-    
+
     #logger.info(f"Number of records in target dataframe: {len(df)}")
     #logger.info(f"Unique percentages: {unique_percentages}")
 
@@ -285,12 +285,12 @@ def preprocess_pipeline(
     items_df, users_df, inter_df = _align_and_clean_interactions(items_df, users_df, interactions_df)
     magnitude = torch.Tensor(_calculate_interaction_loss(inter_df).values)
 
-    logger.info(f"Number of rows in the item_df is: {len(item_df)}")
+    logger.info(f"Number of rows in the items_df is: {len(items_df)}")
     logger.info(f"Number of rows in the user_df is: {len(user_df)}")
     logger.info(f"Number of rows in the inter_df is: {len(inter_df)}")
 
     logger.info("Calling data_preproccess for items.")
-    item_dict = data_preproccess(item_df)
+    item_dict = data_preproccess(items_df)
     logger.info("Calling data_preproccess for users.")
     user_dict = data_preproccess(user_df)
 

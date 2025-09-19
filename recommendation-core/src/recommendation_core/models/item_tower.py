@@ -12,7 +12,7 @@ class ItemTower(nn.Module):
     def __init__(self, d_model=64, category_count=5, subcategory_count=25):
         super().__init__()
         logger.info("This is actually used!")
-        
+
         # Define ratios for each feature.
         ratios = {
             "category": 3,
