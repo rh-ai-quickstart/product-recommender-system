@@ -5,6 +5,7 @@ from data_sources import (interactions_source,
                           item_embed_push_source,
                           item_textual_features_embed_push_source,
                           item_name_features_embed_push_source,
+                          item_category_features_embed_push_source,
                           items_source, user_embed_push_source,
                           user_items_push_source, users_source)
 from entities import item_entity, user_entity
@@ -191,6 +192,23 @@ item_name_features_embed_view = FeatureView(
         ),
     ],
     source=item_name_features_embed_push_source,
+    online=True,
+)
+
+item_category_features_embed_view = FeatureView(
+    name="item_category_features_embed",
+    entities=[item_entity],
+    ttl=timedelta(days=365 * 5),
+    schema=[
+        Field(name="item_id", dtype=String),
+        Field(
+            name="category_embedding",
+            dtype=Array(Float32),
+            vector_index=True,
+            vector_search_metric="cosine",
+        ),
+    ],
+    source=item_category_features_embed_push_source,
     online=True,
 )
 

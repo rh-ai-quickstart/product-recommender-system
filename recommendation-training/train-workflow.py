@@ -11,7 +11,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-BASE_IMAGE = os.getenv("BASE_REC_SYS_IMAGE", "quay.io/rh-ai-quickstart/recommendation-core:latest")
+BASE_IMAGE = os.getenv("BASE_REC_SYS_IMAGE", "quay.io/hacohen/recommendation-core:latest")
 
 
 @dsl.component(base_image=BASE_IMAGE)
@@ -135,14 +135,14 @@ def generate_candidates(
             pass
         return x
 
-    #if hasattr(item_encoder, "categorical_embed") and "categorical_features" in proccessed_items:
+    # if hasattr(item_encoder, "categorical_embed") and "categorical_features" in proccessed_items:
     #    proccessed_items["categorical_features"] = _sanitize_categorical(
     #        proccessed_items["categorical_features"],
     #        item_encoder.categorical_embed.num_embeddings,
     #        "items",
     #    )
 
-    #if hasattr(user_encoder, "categorical_embed") and "categorical_features" in proccessed_users:
+    # if hasattr(user_encoder, "categorical_embed") and "categorical_features" in proccessed_users:
     #    proccessed_users["categorical_features"] = _sanitize_categorical(
     #        proccessed_users["categorical_features"],
     #        user_encoder.categorical_embed.num_embeddings,
@@ -157,23 +157,23 @@ def generate_candidates(
 
     # Create tensors for each feature
     numerical_features = proccessed_users["numerical_features"]
-    #categorical_features = proccessed_users["categorical_features"]
+    # categorical_features = proccessed_users["categorical_features"]
     text_features = proccessed_users["text_features"]
     url_images = proccessed_users["url_image"]
 
     # Create dataset and dataloader
-    #dataset = TensorDataset(numerical_features, categorical_features, text_features)
+    # dataset = TensorDataset(numerical_features, categorical_features, text_features)
     dataset = TensorDataset(numerical_features, text_features)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE)
 
     # Process in batches
     user_encoder.eval()
     with torch.inference_mode():
-        #for batch_num, (batch_numerical, batch_categorical, batch_text) in enumerate(dataloader):
+        # for batch_num, (batch_numerical, batch_categorical, batch_text) in enumerate(dataloader):
         for batch_num, (batch_numerical, batch_text) in enumerate(dataloader):
             # Move to device
             batch_numerical = batch_numerical.to(device)
-            #batch_categorical = batch_categorical.to(device)
+            # batch_categorical = batch_categorical.to(device)
             batch_text = batch_text.to(device)
 
             # Get batch of url_images
@@ -184,7 +184,7 @@ def generate_candidates(
             # Create batch dict
             batch_dict = {
                 "numerical_features": batch_numerical,
-                #"categorical_features": batch_categorical,
+                # "categorical_features": batch_categorical,
                 "text_features": batch_text,
                 "url_image": batch_url_images,
             }
@@ -217,7 +217,7 @@ def generate_candidates(
 
     # Store the embedding of text features for search by text
     item_text_features_embed = item_df[["item_id"]].copy()
-
+    # The order of the embeddings in proccessed_items["text_features"] is:  ['product_name', 'about_product', 'category']
     item_text_features_embed["product_name_embedding"] = (
         proccessed_items["text_features"].detach()[:, 0, :].numpy().tolist()
     )
@@ -225,14 +225,27 @@ def generate_candidates(
     item_text_features_embed["about_product_embedding"] = (
         proccessed_items["text_features"].detach()[:, 1, :].numpy().tolist()
     )
+
+    item_text_features_embed["category_embedding"] = (
+        proccessed_items["text_features"].detach()[:, 2, :].numpy().tolist()
+    )
+
     item_text_features_embed["event_timestamp"] = current_time
 
-    item_textual_features = item_text_features_embed.drop("product_name_embedding", axis=1)
-    item_name_features = item_text_features_embed.drop("about_product_embedding", axis=1)
+    item_textual_features = item_text_features_embed.drop(
+        ["product_name_embedding", "category_embedding"], axis=1
+    )
+    item_name_features = item_text_features_embed.drop(
+        ["about_product_embedding", "category_embedding"], axis=1
+    )
+    item_category_features = item_text_features_embed.drop(
+        ["product_name_embedding", "about_product_embedding"], axis=1
+    )
 
     logger.debug(f"item_textual_features columns: {item_textual_features.columns}")
     logger.debug(f"item_name_feature columns: {item_name_features.columns}")
-
+    logger.debug(f"item_category_feature columns: {item_category_features.columns}")
+    
     # Refresh registry to pick up updated feature view schemas
     store.refresh_registry()
     logger.debug("Registry refreshed before pushing text features")
@@ -245,7 +258,7 @@ def generate_candidates(
             to=PushMode.ONLINE,
             allow_registry_cache=False,
         )
-        logger.info(f"pushed to item_textual_features_embed")
+        logger.info("pushed to item_textual_features_embed")
     except Exception as e:
         logger.error(f"failed to push to item_textual_features_embed with error: {e}")
 
@@ -257,9 +270,21 @@ def generate_candidates(
             to=PushMode.ONLINE,
             allow_registry_cache=False,
         )
-        logger.info(f"pushed to item_name_features_embed")
+        logger.info("pushed to item_name_features_embed")
     except Exception as e:
         logger.error(f"failed to push to item_name_features_embed with error: {e}")
+
+    logger.info("About to push to 'item_category_features_embed' push source")
+    try:
+        store.push(
+            "item_category_features_embed",
+            item_category_features,
+            to=PushMode.ONLINE,
+            allow_registry_cache=False,
+        )
+        logger.info("pushed to item_category_features_embed")
+    except Exception as e:
+        logger.error(f"failed to push to item_category_features_embed with error: {e}")
 
     # Store the embedding of clip features for search by image
     clip_encoder = ClipEncoder()
@@ -280,6 +305,7 @@ def generate_candidates(
             "item_features",
             "item_textual_features_embed",
             "item_name_features_embed",
+            "item_category_features_embed",
         ],
     )
 
