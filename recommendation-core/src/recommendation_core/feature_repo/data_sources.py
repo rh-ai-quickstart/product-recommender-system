@@ -45,7 +45,17 @@ item_clip_features_embed_dummy_source = FileSource(
     path=os.path.join(data_path, "item_clip_features_embed.parquet"),
     timestamp_field="event_timestamp",
 )
+item_name_features_embed_dummy_source = FileSource(
+    file_format=ParquetFormat(),
+    path=os.path.join(data_path, "item_name_features_embed.parquet"),
+    timestamp_field="event_timestamp",
+)
 
+item_category_features_embed_dummy_source = FileSource(
+    file_format=ParquetFormat(),
+    path=os.path.join(data_path, "item_category_features_embed.parquet"),
+    timestamp_field="event_timestamp",
+)
 
 item_embed_push_source = PushSource(
     name="item_embed_push_source", batch_source=items_embed_dummy_source
@@ -62,6 +72,16 @@ user_items_push_source = PushSource(
 item_textual_features_embed_push_source = PushSource(
     name="item_textual_features_embed",
     batch_source=item_textual_features_embed_dummy_source,
+)
+
+item_name_features_embed_push_source = PushSource(
+    name="item_name_features_embed",
+    batch_source=item_name_features_embed_dummy_source,
+)
+
+item_category_features_embed_push_source = PushSource(
+    name="item_category_features_embed",
+    batch_source=item_category_features_embed_dummy_source,
 )
 
 item_clip_features_embed_push_source = PushSource(

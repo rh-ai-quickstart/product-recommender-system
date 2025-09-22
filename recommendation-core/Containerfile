@@ -7,16 +7,27 @@ WORKDIR /app/
 COPY pyproject.toml pyproject.toml
 RUN pip3 install uv
 RUN dnf update -y
+# Copy all __init__.py files first
+COPY src/recommendation_core/__init__.py src/recommendation_core/__init__.py
+COPY src/recommendation_core/feature_repo/__init__.py src/recommendation_core/feature_repo/__init__.py
+COPY src/recommendation_core/models/__init__.py src/recommendation_core/models/__init__.py
+COPY src/recommendation_core/service/__init__.py src/recommendation_core/service/__init__.py
+
+
+# Install the package after copying init files
+RUN uv pip install .
+
 
 # Copy the src directory with the new layout
 COPY src/ src/
 
-# Install the package after copying source code
-RUN uv pip install .
 
 # Copy feature store files to the expected location for feast apply
 RUN mkdir -p /app/recommendation-core/src/recommendation_core/feature_repo/
 COPY src/recommendation_core/feature_repo/ /app/recommendation-core/src/recommendation_core/feature_repo/
+
+# Set PYTHONPATH to include both /app and /app/src for proper imports
+ENV PYTHONPATH="/app:/app/src:${PYTHONPATH}"
 
 # give premisssions
 RUN chmod -R 777 . && ls -la
