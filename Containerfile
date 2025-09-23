@@ -36,6 +36,8 @@ COPY recommendation-core/src/recommendation_core/generation/data/generated_image
 
 # Set Hugging Face cache directory
 ENV HF_HOME=/hf_cache
+# Ensure local sources are importable at runtime
+ENV PYTHONPATH=/app/backend:/app/backend/src:/app/recommendation-core/src
 
 # Pre-download the model and fix permissions again after download
 RUN  pip3 install uv && uv pip install -r pyproject.toml && \

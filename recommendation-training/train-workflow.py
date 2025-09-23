@@ -49,22 +49,22 @@ def generate_candidates(
 
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = torch.device("cpu")
-    logger.debug("models_definition items")
-    logger.debug(
+    logger.info("models_definition items")
+    logger.info(
         f"models_definition['items_num_numerical']: {models_definition['items_num_numerical']}"
     )
-    logger.debug(
+    logger.info(
         f"models_definition['items_num_categorical']: {models_definition['items_num_categorical']}"
     )
     item_encoder = EntityTower(
         models_definition["items_num_numerical"],
         models_definition["items_num_categorical"],
     )
-    logger.debug("models_definition users")
-    logger.debug(
+    logger.info("models_definition users")
+    logger.info(
         f"models_definition['users_num_numerical']: {models_definition['users_num_numerical']}"
     )
-    logger.debug(
+    logger.info(
         f"models_definition['users_num_categorical']: {models_definition['users_num_categorical']}"
     )
     user_encoder = EntityTower(
@@ -89,24 +89,24 @@ def generate_candidates(
     proccessed_items = data_preproccess(item_df)
     proccessed_users = data_preproccess(user_df)
 
-    logger.debug("proccessed_items")
+    logger.info("proccessed_items")
     for key, value in proccessed_items.items():
-        logger.debug(f"proccessed_items[{key}]: {type(value)}")
+        logger.info(f"proccessed_items[{key}]: {type(value)}")
         if hasattr(value, "shape"):
-            logger.debug(f"proccessed_items[{key}]: {value.shape}")
+            logger.info(f"proccessed_items[{key}]: {value.shape}")
         else:
-            logger.debug(f"proccessed_items[{key}]: {len(value)}")
-            logger.debug(f"proccessed_items[{key}]: {value}")
+            logger.info(f"proccessed_items[{key}]: {len(value)}")
+            logger.info(f"proccessed_items[{key}]: {value}")
 
-    logger.debug("****************************************")
-    logger.debug("proccessed_users")
+    logger.info("****************************************")
+    logger.info("proccessed_users")
     for key, value in proccessed_users.items():
-        logger.debug(f"proccessed_users[{key}]: {type(value)}")
+        logger.info(f"proccessed_users[{key}]: {type(value)}")
         if hasattr(value, "shape"):
-            logger.debug(f"proccessed_users[{key}]: {value.shape}")
+            logger.info(f"proccessed_users[{key}]: {value.shape}")
         else:
-            logger.debug(f"proccessed_users[{key}]: {len(value)}")
-            logger.debug(f"proccessed_users[{key}]: {value}")
+            logger.info(f"proccessed_users[{key}]: {len(value)}")
+            logger.info(f"proccessed_users[{key}]: {value}")
 
     # Move tensors to device
     proccessed_items = {
@@ -126,7 +126,7 @@ def generate_candidates(
         if num_embeddings > 0:
             x = torch.clamp(x, 0, num_embeddings - 1)
         try:
-            logger.debug(
+            logger.info(
                 f"{name} categorical idx range after clamp: "
                 f"[{int(x.min().item())}, {int(x.max().item())}] "
                 f"vs allowed [0, {num_embeddings - 1}]"
@@ -242,13 +242,13 @@ def generate_candidates(
         ["product_name_embedding", "about_product_embedding"], axis=1
     )
 
-    logger.debug(f"item_textual_features columns: {item_textual_features.columns}")
-    logger.debug(f"item_name_feature columns: {item_name_features.columns}")
-    logger.debug(f"item_category_feature columns: {item_category_features.columns}")
+    logger.info(f"item_textual_features columns: {item_textual_features.columns}")
+    logger.info(f"item_name_feature columns: {item_name_features.columns}")
+    logger.info(f"item_category_feature columns: {item_category_features.columns}")
     
     # Refresh registry to pick up updated feature view schemas
     store.refresh_registry()
-    logger.debug("Registry refreshed before pushing text features")
+    logger.info("Registry refreshed before pushing text features")
 
     logger.info("About to push to 'item_textual_features_embed' push source")
     try:
@@ -364,10 +364,10 @@ def train_model(
 
     logger = logging.getLogger(__name__)
 
-    logger.debug("train_model function started")
-    logger.debug(f"item_df_input.path = {item_df_input.path}")
-    logger.debug(f"user_df_input.path = {user_df_input.path}")
-    logger.debug(f"interaction_df_input.path = {interaction_df_input.path}")
+    logger.info("train_model function started")
+    logger.info(f"item_df_input.path = {item_df_input.path}")
+    logger.info(f"user_df_input.path = {user_df_input.path}")
+    logger.info(f"interaction_df_input.path = {interaction_df_input.path}")
 
     items_df = pd.read_parquet(item_df_input.path)
     users_df = pd.read_parquet(user_df_input.path)
@@ -387,31 +387,31 @@ def train_model(
     with open(models_definition_output.path, "w") as f:
         json.dump(models_definition, f)
 
-    logger.debug("About to create database engine")
-    logger.debug(f"DATABASE_URL = {os.getenv('DATABASE_URL', 'NOT_SET')}")
-    logger.debug(f"uri = {os.getenv('uri', 'NOT_SET')}")
+    logger.info("About to create database engine")
+    logger.info(f"DATABASE_URL = {os.getenv('DATABASE_URL', 'NOT_SET')}")
+    logger.info(f"uri = {os.getenv('uri', 'NOT_SET')}")
 
     #
     engine = create_engine(os.getenv("uri", None))
-    logger.debug("DEBUG: Database engine created successfully")
+    logger.info("DEBUG: Database engine created successfully")
 
     # Check if table exists
     def table_exists(engine, table_name):
-        logger.debug(f"Checking if table '{table_name}' exists")
+        logger.info(f"Checking if table '{table_name}' exists")
         query = text(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = :table_name"
         )
         with engine.connect() as connection:
             result = connection.execute(query, {"table_name": table_name}).scalar()
-            logger.debug(f"Table '{table_name}' exists: {result > 0}")
+            logger.info(f"Table '{table_name}' exists: {result > 0}")
             return result > 0
 
-    logger.debug("About to check if model_version table exists")
+    logger.info("About to check if model_version table exists")
     if not table_exists(engine, "model_version"):
-        logger.debug("model_version table does not exist, creating it...")
+        logger.info("model_version table does not exist, creating it...")
         # Create table if it doesn't exist
         with engine.connect() as connection:
-            logger.debug("Executing CREATE TABLE model_version")
+            logger.info("Executing CREATE TABLE model_version")
             connection.execute(
                 text(
                     """
@@ -423,17 +423,17 @@ def train_model(
             """
                 )
             )
-            logger.debug("CREATE TABLE executed successfully")
+            logger.info("CREATE TABLE executed successfully")
             new_version = "1.0.0"
-            logger.debug(f"Inserting version '{new_version}' into model_version table")
+            logger.info(f"Inserting version '{new_version}' into model_version table")
             connection.execute(
                 text(f"INSERT INTO model_version (version) VALUES ('{new_version}');")
             )
-            logger.debug("INSERT executed successfully")
+            logger.info("INSERT executed successfully")
             connection.commit()
-            logger.debug("COMMIT executed successfully")
+            logger.info("COMMIT executed successfully")
     else:
-        logger.debug("DEBUG: model_version table exists, updating version...")
+        logger.info("DEBUG: model_version table exists, updating version...")
         # Get last version and increment minor version by 0.0.1
         with engine.connect() as connection:
             last_version = connection.execute(
@@ -505,7 +505,7 @@ def fetch_cluster_credentials() -> NamedTuple(
     user_token_value = subprocess.run(
         "oc whoami -t", shell=True, capture_output=True, text=True, check=True
     ).stdout.strip()
-    logger.debug(f"author_value = {author_value}")
+    logger.info(f"author_value = {author_value}")
     mr_namespace = os.getenv("MODEL_REGISTRY_NAMESPACE", "rhoai-model-registries")
     mr_container = os.getenv("MODEL_REGISTRY_CONTAINER", "modelregistry-sample")
 
@@ -629,20 +629,20 @@ def load_data_from_feast(
             logger.error(f"Error reading users from database: {e}")
             stream_users_df = pd.DataFrame()
 
-        logger.debug("Showing head of tables")
-        logger.debug(
+        logger.info("Showing head of tables")
+        logger.info(
             f"stream_users_df: \n{tb.tabulate(stream_users_df.head(), headers='keys', tablefmt='grid')}"
         )
-        logger.debug("****************************************")
-        logger.debug(f"user_df: \n{tb.tabulate(user_df.head(), headers='keys', tablefmt='grid')}")
+        logger.info("****************************************")
+        logger.info(f"user_df: \n{tb.tabulate(user_df.head(), headers='keys', tablefmt='grid')}")
 
         if not stream_users_df.empty:
-            logger.debug(f"user_df columns: {user_df.columns}")
-            logger.debug(f"stream_users_df columns: {stream_users_df.columns}")
+            logger.info(f"user_df columns: {user_df.columns}")
+            logger.info(f"stream_users_df columns: {stream_users_df.columns}")
             stream_users_df["signup_date"] = pd.to_datetime(stream_users_df["signup_date"])
             logger.info(f"Adding {len(stream_users_df)} users to user_df")
             user_df = pd.concat([user_df, stream_users_df], axis=0)
-            logger.debug(f"user_df columns: {user_df.columns}")
+            logger.info(f"user_df columns: {user_df.columns}")
         else:
             logger.info("No new users found in database")
 

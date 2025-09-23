@@ -161,7 +161,7 @@ export const ReviewSummarizationModal = ({
         style={{
           maxHeight: 'calc(80vh - 120px)',
           overflowY: 'auto',
-          paddingRight: '8px',
+          paddingRight: '24px',
         }}
       >
         {summarizationQuery.isLoading ? (
@@ -169,7 +169,7 @@ export const ReviewSummarizationModal = ({
             style={{
               textAlign: 'center',
               padding: '3rem 2rem',
-              background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               borderRadius: '12px',
               margin: '1rem 0',
             }}
@@ -186,8 +186,8 @@ export const ReviewSummarizationModal = ({
                 style={{
                   width: '60px',
                   height: '60px',
-                  border: '4px solid #e3f2fd',
-                  borderTop: '4px solid #2196f3',
+                  border: '4px solid rgba(255,255,255,0.3)',
+                  borderTop: '4px solid #ffffff',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite',
                   marginRight: '1rem',
@@ -197,7 +197,7 @@ export const ReviewSummarizationModal = ({
                 <h3
                   style={{
                     margin: 0,
-                    color: '#1976d2',
+                    color: '#ffffff',
                     fontSize: '1.5rem',
                     fontWeight: '600',
                   }}
@@ -207,7 +207,7 @@ export const ReviewSummarizationModal = ({
                 <p
                   style={{
                     margin: '0.5rem 0 0 0',
-                    color: '#666',
+                    color: 'rgba(255,255,255,0.9)',
                     fontSize: '1rem',
                   }}
                 >
@@ -227,7 +227,7 @@ export const ReviewSummarizationModal = ({
                 style={{
                   width: '8px',
                   height: '8px',
-                  backgroundColor: '#2196f3',
+                  backgroundColor: '#ffffff',
                   borderRadius: '50%',
                   animation: 'pulse 1.5s ease-in-out infinite',
                 }}
@@ -236,7 +236,7 @@ export const ReviewSummarizationModal = ({
                 style={{
                   width: '8px',
                   height: '8px',
-                  backgroundColor: '#2196f3',
+                  backgroundColor: '#ffffff',
                   borderRadius: '50%',
                   animation: 'pulse 1.5s ease-in-out infinite 0.2s',
                 }}
@@ -245,7 +245,7 @@ export const ReviewSummarizationModal = ({
                 style={{
                   width: '8px',
                   height: '8px',
-                  backgroundColor: '#2196f3',
+                  backgroundColor: '#ffffff',
                   borderRadius: '50%',
                   animation: 'pulse 1.5s ease-in-out infinite 0.4s',
                 }}
@@ -310,12 +310,12 @@ export const ReviewSummarizationModal = ({
 
             <div
               style={{
-                background: '#f8f9fa',
+                background: 'linear-gradient(135deg, #5a8dee 0%, #1976d2 100%)',
                 padding: '1rem',
                 borderRadius: '8px',
-                border: '1px solid #e9ecef',
+                border: 'none',
                 fontSize: '0.9rem',
-                color: '#6c757d',
+                color: '#ffffff',
                 textAlign: 'center',
               }}
             >

@@ -6,6 +6,7 @@ from transformers import AutoModel, AutoTokenizer
 import logging
 import os
 from sqlalchemy import create_engine, text
+from collections import Counter
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -14,111 +15,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
-
-_ITEM_IDS = [
-    "B084531076",
-    "B021643208",
-    "B087822269",
-    "B022225855",
-    "B018910852",
-    "B018351245",
-    "B080790126",
-    "B060676914",
-    "B041556003",
-    "B063509641",
-    "B020688727",
-    "B030154994",
-    "B046940933",
-    "B035836512",
-    "B094776775",
-    "B092972373",
-    "B090908854",
-    "B098121122",
-    "B035146282",
-    "B090074928",
-    "B045966581",
-    "B089594423",
-    "B077812526",
-    "B047003110",
-    "B097929144",
-    "B093463150",
-    "B060831524",
-    "B016202258",
-    "B092932418",
-    "B066761259",
-    "B091447632",
-    "B096131989",
-    "B020971177",
-    "B065098996",
-    "B044780908",
-    "B077800621",
-    "B041970599",
-    "B081240343",
-    "B086176890",
-    "B013875754",
-    "B032564965",
-    "B023143608",
-    "B030515189",
-    "B038172140",
-    "B011524102",
-    "B033468625",
-    "B052942594",
-    "B092058636",
-    "B048499601",
-    "B020760888",
-    "B068075712",
-    "B056571160",
-    "B091242298",
-    "B094445004",
-    "B061195209",
-    "B011514542",
-    "B045383985",
-    "B095561923",
-    "B087960088",
-    "B021377787",
-    "B077511983",
-    "B011132658",
-    "B079475474",
-    "B061900771",
-    "B067195030",
-    "B042073692",
-    "B048965695",
-    "B042735803",
-    "B053497663",
-    "B030353727",
-    "B048710304",
-    "B039221379",
-    "B058548947",
-    "B067884623",
-    "B058123406",
-    "B022866619",
-    "B076777436",
-    "B029659206",
-    "B091576052",
-    "B085134271",
-    "B045943815",
-    "B068438965",
-    "B039536204",
-    "B034455289",
-    "B014409352",
-    "B011308507",
-    "B030606265",
-    "B024150540",
-    "B046286070",
-    "B035955176",
-    "B051478073",
-    "B061756593",
-    "B060277283",
-    "B021950831",
-    "B043523310",
-    "B044932801",
-    "B088981711",
-    "B020856760",
-    "B048090551",
-    "B063175588",
-    "B041073264",
-]
-
 
 class SearchService:
     def __init__(self, store: FeatureStore):
@@ -187,7 +83,7 @@ class SearchService:
             logger.error(f"failed to calculate embeddings due to error:\n{e}")
             raise e
 
-        logger.debug(
+        logger.info(
             f"calculated cosine similarity scores between free text embeddings of shape: {free_text_embeddings.shape} \
             and items embeddings of shape: {items_embeddnigs.shape} \
             resulted in scores vector of shape: {similarity_scores.shape}"
@@ -205,15 +101,18 @@ class SearchService:
 
         top_scores, top_indices = torch.topk(max_scores, k)
 
-        logger.debug(f"top scores: {top_scores}\ntop indices: {top_indices}")
+        logger.info(f"top scores: {top_scores}\ntop indices: {top_indices}")
         items = items_df.iloc[top_indices.tolist()]
 
         return items["item_id"]
 
     def search_by_text(self, text, k) -> pd.DataFrame:
+        logger.info(f"search_by_text: query='{text}', k={k}")
         all_items_df = self._get_item_ids()
 
-        logger.debug(f"all items df columns: {all_items_df.columns.tolist()}")
+        logger.info(f"candidate items: {len(all_items_df)}; sample={all_items_df['item_id'].head(3).tolist()}")
+
+        logger.info(f"all items df columns: {all_items_df.columns.tolist()}")
 
         # Extract embedding data
         about_product_embeddings_df = self.store.get_online_features(
@@ -231,23 +130,59 @@ class SearchService:
             entity_rows=[{"item_id": item_id} for item_id in all_items_df["item_id"]],
         ).to_df()
 
+        logger.info(
+            f"retrieved columns about={list(about_product_embeddings_df.columns)}, name={list(product_name_embeddings_df.columns)}, category={list(category_embeddings_df.columns)}"
+        )
+
         # Extract the embedding arrays from the DataFrame columns
         about_product_embeddings = about_product_embeddings_df["about_product_embedding"].values
         product_name_embeddings = product_name_embeddings_df["product_name_embedding"].values
         category_embeddings = category_embeddings_df["category_embedding"].values
 
+        # Diagnostics: null/empty counts and sample entry types/lengths (no logic change)
+        try:
+            about_nulls = int(np.sum([(x is None) or (hasattr(x, "__len__") and len(x) == 0) for x in about_product_embeddings]))
+            name_nulls = int(np.sum([(x is None) or (hasattr(x, "__len__") and len(x) == 0) for x in product_name_embeddings]))
+            cat_nulls = int(np.sum([(x is None) or (hasattr(x, "__len__") and len(x) == 0) for x in category_embeddings]))
+            logger.info(f"null/empty vectors -> about:{about_nulls} name:{name_nulls} category:{cat_nulls}")
+        except Exception as e:
+            logger.info(f"null/empty vector count failed: {e}")
+
+        try:
+            def _sample_summ(arr):
+                out = []
+                for x in arr[:3]:
+                    try:
+                        l = len(x)
+                    except Exception:
+                        l = "NA"
+                    out.append(f"{type(x).__name__}:{l}")
+                return out
+            logger.info(f"sample entries -> about:{_sample_summ(about_product_embeddings)} name:{_sample_summ(product_name_embeddings)} category:{_sample_summ(category_embeddings)}")
+        except Exception as e:
+            logger.info(f"sample summary failed: {e}")
+        
+        logger.info(f"Try/except block completed")
+
         # Get the tensors
-        about_product_tensor = torch.tensor(
-            np.stack(about_product_embeddings), dtype=torch.float32
-        )
-        product_name_tensor = torch.tensor(np.stack(product_name_embeddings), dtype=torch.float32)
-        category_tensor = torch.tensor(np.stack(category_embeddings), dtype=torch.float32)
-        logger.debug(f"shape of about_product_tensor: {about_product_tensor.shape}")
-        logger.debug(f"shape of product_name_tensor: {product_name_tensor.shape}")
-        logger.debug(f"shape of category_tensor: {category_tensor.shape}")
+        try:
+            about_product_tensor = torch.tensor(
+                np.stack(about_product_embeddings), dtype=torch.float32
+            )
+        except Exception as e:
+            logger.info(f"np.stack(about_product_embeddings) failed: {e}")
+            raise
+        try:
+            product_name_tensor = torch.tensor(np.stack(product_name_embeddings), dtype=torch.float32)
+        except Exception as e:
+            logger.info(f"np.stack(product_name_embeddings) failed: {e}")
+            raise
+
+        logger.info(f"shape of about_product_tensor: {about_product_tensor.shape}")
+        logger.info(f"shape of product_name_tensor: {product_name_tensor.shape}")
 
         items_embeddings = torch.stack(
-            [about_product_tensor, product_name_tensor, category_tensor], dim=1
+            [about_product_tensor, product_name_tensor], dim=1
         )
         logger.info(f"textual features has embeddings tensor of shape: {items_embeddings.shape}")
 
@@ -257,6 +192,7 @@ class SearchService:
         similarity_scores = self._calculate_similarity_scores(
             free_text_embeddings, items_embeddings
         )
+        logger.info(f"similarity scores tensor shape: {similarity_scores.shape}")
 
         top_items = self._get_top_k_items(all_items_df, similarity_scores, k=5)
         logger.info(f"top items are:\n{top_items}")
@@ -270,5 +206,6 @@ class SearchService:
             entity_df=ids,
             features=item_service,
         ).to_df()
+        logger.info(f"returned rows: {len(values)}")
 
         return values
