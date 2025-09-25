@@ -194,7 +194,7 @@ class SearchService:
         )
         logger.info(f"similarity scores tensor shape: {similarity_scores.shape}")
 
-        top_items = self._get_top_k_items(all_items_df, similarity_scores, k=5)
+        top_items = self._get_top_k_items(all_items_df, similarity_scores, k=k)
         logger.info(f"top items are:\n{top_items}")
         ids = pd.DataFrame()
 
