@@ -114,10 +114,15 @@ echo ""
 echo "=== Step 4: Running Integration Tests ==="
 cd /app/tests/integration
 
+TEST_EXIT_CODE=0
 # Run integration tests and capture output
 echo "Running integration tests and capturing output..."
-TEST_OUTPUT=$(NAMESPACE=$TESTING_NAMESPACE bash run_integration_tests.sh 2>&1)
-TEST_EXIT_CODE=$?
+if ! TEST_OUTPUT=$(NAMESPACE=$TESTING_NAMESPACE bash run_integration_tests.sh 2>&1); then
+    TEST_EXIT_CODE=$?
+    echo "❌ Integration tests failed with exit code: $TEST_EXIT_CODE"
+else
+    echo "✅ Integration tests completed successfully"
+fi
 
 # Escape the output for JSON and create a proper payload
 ESCAPED_OUTPUT=$(echo "$TEST_OUTPUT" | jq -Rs .)
@@ -128,17 +133,7 @@ echo "Escaped output: $ESCAPED_OUTPUT"
 echo "Sending test results to Slack..."
 curl -X POST -H 'Content-type: application/json' --data "{\"text\": $ESCAPED_OUTPUT}" $SLACK_WEBHOOK
 
-# Check if tests failed
-if [ $TEST_EXIT_CODE -ne 0 ]; then
-    {
-        echo "❌ Integration tests failed to run"
-        cleanup_and_exit $TEST_EXIT_CODE
-    }
-else
-    echo "✅ Integration tests completed successfully"
-fi
-
 # Step 5: Uninstall the system
+echo "=== Step 5: Uninstalling the system ==="
 trap - INT TERM EXIT
-
-cleanup_and_exit 0
+cleanup_and_exit $TEST_EXIT_CODE
