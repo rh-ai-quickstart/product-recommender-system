@@ -6,14 +6,19 @@ import {
 } from '@patternfly/react-core';
 import { LazyProductGallery } from './LazyProductGallery';
 import { GallerySkeleton } from './gallery-skeleton';
-import { useProductSearch } from '../hooks';
+import { useProductSearchByText } from '../hooks';
+import { DEFAULT_SEARCH_RESULTS_COUNT } from '../constants';
 
 interface SearchResultsPageProps {
   query: string;
 }
 
 export function SearchResultsPage({ query }: SearchResultsPageProps) {
-  const { data, error, isLoading } = useProductSearch(query, query.length > 0);
+  const { data, error, isLoading } = useProductSearchByText(
+    query,
+    DEFAULT_SEARCH_RESULTS_COUNT,
+    query.length > 0
+  );
 
   const products = data ? data : [];
 

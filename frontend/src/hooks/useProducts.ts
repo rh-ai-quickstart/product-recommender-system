@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   fetchProduct,
-  searchProducts,
   searchProductsByText,
   searchProductsByImageLink,
   searchProductsByImage,
 } from '../services/products';
+import { DEFAULT_SEARCH_RESULTS_COUNT } from '../constants';
 
 export const useProduct = (productId: string) => {
   return useQuery({
@@ -16,18 +16,9 @@ export const useProduct = (productId: string) => {
   });
 };
 
-export const useProductSearch = (query: string, enabled: boolean = true) => {
-  return useQuery({
-    queryKey: ['products', 'search', query],
-    queryFn: () => searchProducts(query),
-    enabled: enabled && !!query && query.trim().length > 0,
-    staleTime: 2 * 60 * 1000, // Override: search results change more frequently
-  });
-};
-
 export const useProductSearchByText = (
   query: string,
-  k: number = 5,
+  k: number = DEFAULT_SEARCH_RESULTS_COUNT,
   enabled: boolean = true
 ) => {
   return useQuery({

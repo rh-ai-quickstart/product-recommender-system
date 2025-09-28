@@ -4,6 +4,7 @@ import {
   fetchNewUserRecommendations,
 } from '../services/recommendations';
 import { useAuth } from '../contexts/AuthProvider';
+import { DEFAULT_RECOMMENDATIONS_COUNT } from '../constants';
 
 /**
  * Smart recommendations hook that automatically chooses the right recommendation type
@@ -54,7 +55,7 @@ export const useExistingUserRecommendations = (userId: string) => {
 // Recommendations for users without interaction history (cold start)
 export const useNewUserRecommendations = (
   userId: string,
-  numRecommendations: number = 10
+  numRecommendations: number = DEFAULT_RECOMMENDATIONS_COUNT
 ) => {
   return useQuery({
     queryKey: ['recommendations', 'new-user', userId, numRecommendations],

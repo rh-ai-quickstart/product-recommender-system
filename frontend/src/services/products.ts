@@ -1,5 +1,8 @@
 import type { ProductData } from '../types';
 import { apiRequest, ServiceLogger } from './api';
+import {
+  DEFAULT_SEARCH_RESULTS_COUNT,
+} from '../constants';
 
 export const searchProducts = async (query: string): Promise<ProductData[]> => {
   ServiceLogger.logServiceCall('searchProducts', { query });
@@ -20,7 +23,7 @@ export const searchProducts = async (query: string): Promise<ProductData[]> => {
 
 export const searchProductsByText = async (
   query: string,
-  k: number = 5
+  k: number = DEFAULT_SEARCH_RESULTS_COUNT
 ): Promise<ProductData[]> => {
   ServiceLogger.logServiceCall('searchProductsByText', { query, k });
   return apiRequest<ProductData[]>(

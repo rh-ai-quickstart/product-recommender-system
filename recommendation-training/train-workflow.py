@@ -245,7 +245,7 @@ def generate_candidates(
     logger.info(f"item_textual_features columns: {item_textual_features.columns}")
     logger.info(f"item_name_feature columns: {item_name_features.columns}")
     logger.info(f"item_category_feature columns: {item_category_features.columns}")
-    
+
     # Refresh registry to pick up updated feature view schemas
     store.refresh_registry()
     logger.info("Registry refreshed before pushing text features")

@@ -1,5 +1,6 @@
 import type { ProductData } from '../types';
 import { apiRequest, ServiceLogger } from './api';
+import { DEFAULT_RECOMMENDATIONS_COUNT } from '../constants';
 
 /**
  * Fetch personalized recommendations for users with existing interaction history
@@ -42,7 +43,7 @@ export const createNewUserRecommendations = async (
  */
 export const fetchNewUserRecommendations = async (
   userId: string,
-  numRecommendations: number = 10
+  numRecommendations: number = DEFAULT_RECOMMENDATIONS_COUNT
 ): Promise<ProductData[]> => {
   ServiceLogger.logServiceCall('fetchNewUserRecommendations', {
     userId,

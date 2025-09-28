@@ -1,12 +1,12 @@
 // Composite hooks that combine multiple operations for better DX
 import { useAuth } from '../contexts/AuthProvider';
-import { useProduct, useProductSearch } from './useProducts';
+import { useProduct, useProductSearchByText } from './useProducts';
 import { usePersonalizedRecommendations } from './useRecommendations';
 import type { ProductData } from '../types';
 import { useCart, useAddToCart } from './useCart';
 import { useRecordProductClick } from './useInteractions';
 import { useCallback } from 'react';
-
+import { DEFAULT_SEARCH_RESULTS_COUNT } from '../constants';
 /**
  * Hook that provides all product-related actions for a specific product
  * Combines product data, cart operations, and interaction tracking
@@ -199,7 +199,11 @@ export const useSearchWithActions = (
   const userId = user?.user_id || '';
 
   // Get the search results
-  const searchQuery = useProductSearch(query, enabled);
+  const searchQuery = useProductSearchByText(
+    query,
+    DEFAULT_SEARCH_RESULTS_COUNT,
+    enabled
+  );
 
   // Get user's cart data once for the entire list
   const cartQuery = useCart(userId);

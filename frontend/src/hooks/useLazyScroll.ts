@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ProductData } from '../types';
+import { DEFAULT_BATCH_SIZE, DEFAULT_INITIAL_BATCH_SIZE } from '../constants';
 
 interface UseLazyScrollOptions {
   initialBatchSize?: number;
@@ -29,8 +30,8 @@ export const useLazyScroll = (
   options: UseLazyScrollOptions = {}
 ): UseLazyScrollReturn => {
   const {
-    initialBatchSize = 18,
-    batchSize = 18,
+    initialBatchSize = DEFAULT_INITIAL_BATCH_SIZE,
+    batchSize = DEFAULT_BATCH_SIZE,
     loadingDelay = 300,
     rootMargin = '100px',
     threshold = 0.1,

@@ -2,6 +2,7 @@ import { PageSection, Title, Spinner, Alert } from '@patternfly/react-core';
 import { LazyProductGallery } from './LazyProductGallery';
 import { usePersonalizedRecommendations } from '../hooks/useRecommendations';
 import { useAuth } from '../contexts/AuthProvider';
+import { DEFAULT_BATCH_SIZE, DEFAULT_INITIAL_BATCH_SIZE } from '../constants';
 
 export function LandingPage() {
   const { isAuthenticated } = useAuth();
@@ -55,8 +56,8 @@ export function LandingPage() {
         products={products}
         showProductCount={true}
         showScrollToTop={true}
-        initialBatchSize={36}
-        batchSize={36}
+        initialBatchSize={DEFAULT_INITIAL_BATCH_SIZE}
+        batchSize={DEFAULT_BATCH_SIZE}
         loadingDelay={0}
       />
     </>

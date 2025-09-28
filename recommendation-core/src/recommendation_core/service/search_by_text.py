@@ -161,7 +161,7 @@ class SearchService:
             logger.info(f"sample entries -> about:{_sample_summ(about_product_embeddings)} name:{_sample_summ(product_name_embeddings)} category:{_sample_summ(category_embeddings)}")
         except Exception as e:
             logger.info(f"sample summary failed: {e}")
-        
+
         logger.info(f"Try/except block completed")
 
         # Get the tensors
@@ -213,7 +213,7 @@ class SearchService:
         order_mapping = {item_id: idx for idx, item_id in enumerate(top_items)}
         values['sort_order'] = values['item_id'].map(order_mapping)
         values = values.sort_values('sort_order').drop('sort_order', axis=1)
-        
+
         logger.info(f"values sorted to match top_items order")
 
         return values
