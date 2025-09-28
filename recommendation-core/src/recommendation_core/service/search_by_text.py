@@ -93,7 +93,7 @@ class SearchService:
 
     def _get_top_k_items(
         self, items_df: pd.DataFrame, scores: torch.Tensor, k: int = 5
-    ) -> tuple:
+    ) -> pd.Series:
         assert len(items_df) == len(scores), "Incompatible length of items and scores"
 
         # take max score for each item
@@ -104,7 +104,7 @@ class SearchService:
         logger.info(f"top scores: {top_scores}\ntop indices: {top_indices}")
         items = items_df.iloc[top_indices.tolist()]
 
-        return items["item_id"], top_scores
+        return items["item_id"]
 
     def search_by_text(self, text, k) -> pd.DataFrame:
         logger.info(f"search_by_text: query='{text}', k={k}")
@@ -194,11 +194,10 @@ class SearchService:
         )
         logger.info(f"similarity scores tensor shape: {similarity_scores.shape}")
 
-        top_items, top_scores = self._get_top_k_items(all_items_df, similarity_scores, k=k)
+        top_items = self._get_top_k_items(all_items_df, similarity_scores, k=k)
         logger.info(f"top items are:\n{top_items}")
-        logger.info(f"top scores are:\n{top_scores}")
-        
         ids = pd.DataFrame()
+
         ids["item_id"] = top_items
         ids["event_timestamp"] = pd.to_datetime("now", utc=True)
 
@@ -209,14 +208,12 @@ class SearchService:
         ).to_df()
         logger.info(f"returned rows: {len(values)}")
 
-        # Add similarity scores to the results for sorting
-        values["similarity_score"] = top_scores.numpy()
+        # Sort values to match the order of top_items
+        # Create a mapping from item_id to the order in top_items
+        order_mapping = {item_id: idx for idx, item_id in enumerate(top_items)}
+        values['sort_order'] = values['item_id'].map(order_mapping)
+        values = values.sort_values('sort_order').drop('sort_order', axis=1)
         
-        # Sort by similarity score (highest first) to ensure proper order
-        values = values.sort_values("similarity_score", ascending=False)
-        logger.info(f"results sorted by similarity score (highest first)")
-        
-        # Remove the similarity_score column from final output to keep it clean
-        values = values.drop("similarity_score", axis=1)
-        
+        logger.info(f"values sorted to match top_items order")
+
         return values
