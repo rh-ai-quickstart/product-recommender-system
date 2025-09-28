@@ -213,8 +213,7 @@ class SearchService:
         values["similarity_score"] = top_scores.numpy()
         
         # Sort by similarity score (highest first) to ensure proper order
-
-        values = values.sort_values("similarity_score", ascending=True)
+        values = values.sort_values("similarity_score", ascending=False)
         logger.info(f"results sorted by similarity score (highest first)")
         
         # Remove the similarity_score column from final output to keep it clean
