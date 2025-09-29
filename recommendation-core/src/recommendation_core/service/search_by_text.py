@@ -213,7 +213,6 @@ class SearchService:
         order_mapping = {item_id: idx for idx, item_id in enumerate(top_items)}
         values['sort_order'] = values['item_id'].map(order_mapping)
         values = values.sort_values('sort_order').drop('sort_order', axis=1)
-
         logger.info(f"values sorted to match top_items order")
 
         return values
