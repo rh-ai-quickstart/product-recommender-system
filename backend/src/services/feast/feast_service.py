@@ -18,7 +18,7 @@ from recommendation_core.service.clip_encoder import ClipEncoder
 from recommendation_core.service.dataset_provider import LocalDatasetProvider
 from recommendation_core.service.search_by_image import SearchByImageService
 from recommendation_core.service.search_by_text import SearchService
-
+from sqlalchemy import create_engine, text as sql_text
 from models import Product, User
 
 logger = logging.getLogger(__name__)
@@ -181,16 +181,114 @@ class FeastService:
 
     def search_item_by_text(self, text: str, k=5):
         """
-        Perform a semantic search over item descriptions using a text query.
-        Returns top-k matching items.
+        Deterministic + semantic search:
+        - Deterministic boosts: exact > prefix > substring (via SQL)
+        - If deterministic buckets provide >= k unique IDs, return them
+        - Else, fetch semantic candidates to fill remaining slots up to k
         """
         search_service = SearchService(self.store)
-        results_df = search_service.search_by_text(text, k)
-        logger.info(f"Got {len(results_df)} results:")
-        logger.info(tb.tabulate(results_df, headers="keys", tablefmt="grid"))
-        top_item_ids = results_df["item_id"].tolist()
-        results = self._item_ids_to_product_list(top_item_ids)
-        return results
+
+        # Deterministic name boosting via SQL (no category)
+        def _norm(s: str) -> str:
+            return "".join(ch.lower() for ch in (s or "") if ch.isalnum())
+
+        qn = _norm(text)
+        exact_ids: List[str] = []
+        prefix_ids: List[str] = []
+        contains_ids: List[str] = []
+        try:
+            from sqlalchemy import create_engine, text as sql_text
+
+            database_url = os.getenv("DATABASE_URL")
+            if not database_url:
+                raise RuntimeError("DATABASE_URL not set")
+            engine = create_engine(database_url)
+
+            exact_limit = max(k, 20)
+            prefix_limit = max(k * 3, 20)
+            contains_limit = max(k * 3, 20)
+
+            with engine.connect() as conn:
+                def _query_item_ids(where_clause: str, params: dict, limit: int) -> List[str]:
+                    rows = conn.execute(
+                        sql_text(
+                            f"""
+                            SELECT item_id
+                            FROM products
+                            WHERE {where_clause}
+                            LIMIT {limit}
+                            """
+                        ),
+                        params,
+                    ).fetchall()
+                    return [str(r[0]) for r in rows]
+
+                # Common normalized expression
+                norm_expr = "regexp_replace(lower(name), '[^a-z0-9]', '', 'g')"
+
+                # Exact match
+                exact_ids = _query_item_ids(
+                    f"{norm_expr} = :qn",
+                    {"qn": qn},
+                    exact_limit,
+                )
+
+                # Prefix match
+                prefix_ids = _query_item_ids(
+                    f"{norm_expr} LIKE :prefix",
+                    {"prefix": f"{qn}%"},
+                    prefix_limit,
+                )
+
+                # Contains match
+                contains_ids = _query_item_ids(
+                    f"{norm_expr} LIKE :contains",
+                    {"contains": f"%{qn}%"},
+                    contains_limit,
+                )
+
+            logger.info(
+                f"name-boost exact:{len(exact_ids)} prefix:{len(prefix_ids)} contains:{len(contains_ids)}"
+            )
+        except Exception as e:
+            logger.info(f"name boosting skipped: {e}")
+
+        # Merge with priority and dedupe
+        merged: List[str] = []
+        seen = set()
+        for bucket in (exact_ids, prefix_ids, contains_ids):
+            for iid in bucket:
+                if iid not in seen:
+                    merged.append(iid)
+                    seen.add(iid)
+
+        # If we already have k or more, return immediately
+        if len(merged) >= k:
+            final_ids = merged[:k]
+            logger.info(f"final merged ids (top {k}) without semantic: {final_ids}")
+            return self._item_ids_to_product_list(final_ids)
+
+        # Otherwise fetch semantic candidates to fill remaining slots
+        remaining = k - len(merged)
+        semantic_k = max(k, 50)
+        try:
+            semantic_df = search_service.search_by_text(text, semantic_k)
+            semantic_ids = semantic_df["item_id"].astype(str).tolist() if not semantic_df.empty else []
+        except Exception as e:
+            logger.error(f"Semantic search failed: {e}")
+            semantic_ids = []
+
+        for iid in semantic_ids:
+            if iid not in seen:
+                merged.append(iid)
+                seen.add(iid)
+            if len(merged) >= k:
+                break
+
+        final_ids = merged[:k]
+        logger.info(f"final merged ids (top {k}) with semantic fill: {final_ids}")
+
+        return self._item_ids_to_product_list(final_ids)
 
     def search_item_by_image_link(self, image_link: str, k=5):
         """
