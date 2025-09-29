@@ -77,11 +77,12 @@ export const useLazyScroll = (
   ]);
 
   const scrollToTop = useCallback(() => {
-    const pageMain = document.querySelector('.pf-v6-c-page__main') || 
-                     document.querySelector('[data-ouia-component-type="Page"]') ||
-                     document.querySelector('.pf-c-page__main') ||
-                     document.querySelector('main');
-    
+    const pageMain =
+      document.querySelector('.pf-v6-c-page__main') ||
+      document.querySelector('[data-ouia-component-type="Page"]') ||
+      document.querySelector('.pf-c-page__main') ||
+      document.querySelector('main');
+
     const target = pageMain || window;
     target.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -95,21 +96,25 @@ export const useLazyScroll = (
   // Simple scroll handler for top button
   useEffect(() => {
     const getScrollContainer = () => {
-      return document.querySelector('.pf-v6-c-page__main') || 
-             document.querySelector('[data-ouia-component-type="Page"]') ||
-             document.querySelector('.pf-c-page__main') ||
-             document.querySelector('main');
+      return (
+        document.querySelector('.pf-v6-c-page__main') ||
+        document.querySelector('[data-ouia-component-type="Page"]') ||
+        document.querySelector('.pf-c-page__main') ||
+        document.querySelector('main')
+      );
     };
 
     const handleScroll = () => {
       const pageMain = getScrollContainer();
-      const scrollTop = pageMain ? pageMain.scrollTop : (window.pageYOffset || document.documentElement.scrollTop);
+      const scrollTop = pageMain
+        ? pageMain.scrollTop
+        : window.pageYOffset || document.documentElement.scrollTop;
       setShowScrollToTop(scrollTop > 300);
     };
 
     const scrollContainer = getScrollContainer();
     const target = scrollContainer || window;
-    
+
     target.addEventListener('scroll', handleScroll);
     return () => target.removeEventListener('scroll', handleScroll);
   }, []);

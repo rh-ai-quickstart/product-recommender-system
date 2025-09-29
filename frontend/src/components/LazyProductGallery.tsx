@@ -45,7 +45,6 @@ export const LazyProductGallery: React.FC<LazyProductGalleryProps> = ({
     loadingDelay,
   });
 
-
   return (
     <div className={className}>
       {title && (
@@ -110,7 +109,6 @@ export const LazyProductGallery: React.FC<LazyProductGalleryProps> = ({
           All {products.length} products have been loaded
         </div>
       )}
-
 
       {/* Return to Top Button */}
       {(showScrollToTop || hookShowScrollToTop) && (
