@@ -17,16 +17,8 @@ jobs:
   build-tester-image:
     name: Build and Push Tester Image
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - name: product-recommender-testing
-            context: tester
-            image-name: product-recommender-testing
+    if: github.repository == 'rh-ai-quickstart/product-recommender-system'
 
-    defaults:
-      run:
-        working-directory: .
 
     steps:
       - name: Checkout repository
