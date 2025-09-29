@@ -38,11 +38,13 @@ export const LazyProductGallery: React.FC<LazyProductGalleryProps> = ({
     scrollToTop,
     loadingRef,
     containerRef,
+    showScrollToTop: hookShowScrollToTop,
   } = useLazyScroll(products, {
     initialBatchSize,
     batchSize,
     loadingDelay,
   });
+
 
   return (
     <div className={className}>
@@ -109,8 +111,9 @@ export const LazyProductGallery: React.FC<LazyProductGalleryProps> = ({
         </div>
       )}
 
+
       {/* Return to Top Button */}
-      {showScrollToTop && (
+      {(showScrollToTop || hookShowScrollToTop) && (
         <Button
           variant={ButtonVariant.primary}
           onClick={scrollToTop}
