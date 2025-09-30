@@ -178,7 +178,6 @@ spec:
         args:
           - --datadir
           - {{ .Values.modelRegistry.database.deployment.mysql.datadir }}
-          - --default-authentication-plugin={{ .Values.modelRegistry.database.deployment.mysql.authPlugin }}
         image: {{ .Values.modelRegistry.database.deployment.image }}
         imagePullPolicy: {{ .Values.modelRegistry.database.deployment.imagePullPolicy }}
         livenessProbe:
@@ -209,12 +208,34 @@ spec:
         volumeMounts:
         - mountPath: /var/lib/mysql
           name: {{ .Values.modelRegistry.database.name }}-data
+        - mountPath: /etc/mysql/conf.d
+          name: mysql-config
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       volumes:
       - name: {{ .Values.modelRegistry.database.name }}-data
         persistentVolumeClaim:
           claimName: {{ .Values.modelRegistry.database.name }}
+      - name: mysql-config
+        configMap:
+          name: {{ .Values.modelRegistry.database.name }}-config
+
+{{- $configMapExists := (lookup "v1" "ConfigMap" .Values.modelRegistry.namespace .Values.modelRegistry.database.name) }}
+{{- if not $configMapExists }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.modelRegistry.database.name }}-config
+  namespace: {{ .Values.modelRegistry.namespace }}
+data:
+  mysql.cnf: |
+    [mysqld]
+    default_authentication_plugin=caching_sha2_password
+    log_error_verbosity=1
+    skip_log_bin=1
+    [mysql]
+    default_auth=caching_sha2_password
+{{- end }}
 {{- end }}
 {{- end }}
 ---
