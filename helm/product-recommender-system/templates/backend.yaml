@@ -37,7 +37,7 @@ spec:
             - |
               until oc get job product-recommender-system-db-init -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}' | grep "True"; do
                 echo "Waiting for db-init job to complete..."
-                sleep 5
+                sleep 20
               done
               echo "db-init job completed successfully!"
       containers:
