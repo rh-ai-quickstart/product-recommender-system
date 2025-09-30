@@ -18,8 +18,8 @@ spec:
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
-      # Job timeout after 30 minutes
-      activeDeadlineSeconds: 1800
+      # Job timeout after 35 minutes
+      activeDeadlineSeconds: 2100
       backoffLimit: 0
       template:
         metadata:
