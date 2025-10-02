@@ -170,9 +170,93 @@ async def summarize_reviews(
                 summary="Not enough reviews available for this product yet.",
             )
 
+        # Stratified sampling by rating (1..5). We group reviews into buckets by
+        # star rating, sort each bucket by recency (created_at desc), then allocate
+        # a per-bucket quota proportionally with a minimum of 1 for any non-empty
+        # bucket, and trim/redistribute to exactly SUMMARIZE_MAX_REVIEWS.
+        # Example:
+        #   - Total reviews = 10, target SUMMARIZE_MAX_REVIEWS = 6
+        #   - Counts per rating = {1star:1, 2star:2, 3star:3, 4star:2, 5star:2}
+        #   - Proportional quotas ≈ {1:1, 2:1, 3:2, 4:1, 5:1} (sum=6)
+        #   - Take that many most recent from each bucket and concatenate (e.g., 5star→4star→3star→2star→1star)
+        try:
+            import math
+
+            max_reviews = int(os.getenv("SUMMARIZE_MAX_REVIEWS", "200"))
+            if max_reviews <= 0:
+                max_reviews = 200
+
+            sampled = reviews
+            if len(reviews) > max_reviews:
+                # Group by rating
+                buckets = {r: [] for r in (1, 2, 3, 4, 5)}
+                for r in reviews:
+                    rating = int(getattr(r, "rating", 0) or 0)
+                    if rating in buckets:
+                        buckets[rating].append(r)
+                # Sort each bucket by recency (created_at desc; fallback by id desc)
+                for r in buckets:
+                    buckets[r].sort(
+                        key=lambda x: (
+                            getattr(x, "created_at", None) is not None,
+                            getattr(x, "created_at", None) or 0,
+                            getattr(x, "id", 0) or 0,
+                        ),
+                        reverse=True,
+                    )
+                total = sum(len(buckets[r]) for r in buckets)
+                # Initial proportional quotas
+                quotas = {r: 0 for r in buckets}
+                for r in buckets:
+                    count = len(buckets[r])
+                    if count > 0:
+                        quotas[r] = max(1, int(round(max_reviews * count / total)))
+                # Adjust quotas to sum exactly to max_reviews
+                current = sum(quotas.values())
+                # Reduce if over
+                if current > max_reviews:
+                    # Prefer reducing buckets with the largest quotas > 1
+                    while current > max_reviews:
+                        # Pick bucket with max quota (>1) and available items
+                        r_max = max((rk for rk in quotas if quotas[rk] > 1), key=lambda k: quotas[k], default=None)
+                        if r_max is None:
+                            break
+                        quotas[r_max] -= 1
+                        current -= 1
+                # Increase if under (and if bucket has remaining items)
+                if current < max_reviews:
+                    leftovers = max_reviews - current
+                    # Distribute to buckets with the most remaining items
+                    order = sorted(
+                        buckets.keys(),
+                        key=lambda k: (len(buckets[k]) - quotas[k]),
+                        reverse=True,
+                    )
+                    i = 0
+                    while leftovers > 0 and order:
+                        k_r = order[i % len(order)]
+                        if len(buckets[k_r]) > quotas[k_r]:
+                            quotas[k_r] += 1
+                            leftovers -= 1
+                        i += 1
+                        # break if no bucket has remaining
+                        if all(len(buckets[k]) <= quotas[k] for k in buckets):
+                            break
+                # Build sampled set in rating order (optional)
+                sampled = []
+                for r in (5, 4, 3, 2, 1):
+                    take = quotas.get(r, 0)
+                    if take > 0 and buckets[r]:
+                        sampled.extend(buckets[r][:take])
+            else:
+                sampled = reviews
+        except Exception as e:
+            logger.info(f"Stratified sampling skipped due to error: {e}")
+            sampled = reviews
+
         # Prepare review text for summarization
         review_texts = []
-        for review in reviews:
+        for review in sampled:
             review_text = f"Rating: {review.rating}/5"
             if review.title:
                 review_text += f" - Title: {review.title}"
