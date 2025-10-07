@@ -118,5 +118,30 @@ class CategoryTree(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Onboarding models
+class OnboardingProductsResponse(BaseModel):
+    products: List[Product]
+    round_number: int
+    total_interactions: int
+    is_complete: bool
+    max_rounds: int = 3
+    target_interactions: int = 10
+
+
+class OnboardingSelectionRequest(BaseModel):
+    selected_product_ids: List[str]
+    round_number: int
+
+
+class OnboardingSelectionResponse(BaseModel):
+    interactions_logged: int
+    total_interactions: int
+    round_number: int
+    is_complete: bool
+    next_round_available: bool
+    max_rounds: int = 3
+    target_interactions: int = 10
+
+
 # This is needed for the forward reference in CategoryTree
 CategoryTree.model_rebuild()

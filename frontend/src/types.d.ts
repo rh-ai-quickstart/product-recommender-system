@@ -88,3 +88,30 @@ export interface TopProductsParams {
   limit?: number; // 1-100, default 10
   include_subcategories?: boolean; // default true
 }
+
+// Onboarding-specific types
+export interface OnboardingProductsResponse {
+  products: ProductData[];
+  round_number: number;
+  total_interactions: number;
+  is_complete: boolean;
+  max_rounds: number;
+  target_interactions: number;
+}
+
+export interface OnboardingSelectionRequest {
+  selected_product_ids: string[];
+  round_number: number;
+}
+
+export interface OnboardingSelectionResponse {
+  interactions_logged: number;
+  total_interactions: number;
+  round_number: number;
+  is_complete: boolean;
+  next_round_available: boolean;
+  max_rounds: number;
+  target_interactions: number;
+}
+
+export type OnboardingStep = 'categories' | 'products' | 'complete';
