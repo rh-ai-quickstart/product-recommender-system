@@ -18,13 +18,13 @@ A complete, cloud-native product recommender that showcases search, recommendati
 - Images: Synthetic catalog images; text-to-image generated assets
 
 
-<img src="figures/data_processing_pipeline.drawio.png" alt="Data Processing Pipeline" width="80%">
+<img src="docs/images/data_processing_pipeline.drawio.png" alt="Data Processing Pipeline" width="80%">
 
-<img src="figures/training_and_batch_scoring.drawio.png" alt="Training & Batch Scoring" width="80%">
+<img src="docs/images/training_and_batch_scoring.drawio.png" alt="Training & Batch Scoring" width="80%">
 
-<img src="figures/Inference.drawio.png" alt="Inference" width="80%">
+<img src="docs/images/Inference.drawio.png" alt="Inference" width="80%">
 
-<img src="figures/search_by.drawio.png" alt="Search by Text/Image" width="80%">
+<img src="docs/images/search_by.drawio.png" alt="Search by Text/Image" width="80%">
 
 ---
 
