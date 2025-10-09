@@ -173,14 +173,14 @@ export const ProductDetails = () => {
                 <Flex direction={{ default: 'column' }}>
                   <FlexItem>
                     <StarRatings
-                      rating={product.rating}
+                      rating={summaryQuery.data?.avg_rating || product.rating || 0}
                       starRatedColor='black'
                       numberOfStars={5}
                       name='rating'
                       starDimension='18px'
                       starSpacing='1px'
                     />{' '}
-                    {product.rating}
+                    {summaryQuery.data?.avg_rating ? summaryQuery.data.avg_rating.toFixed(1) : (product.rating ? product.rating.toFixed(1) : '0.0')}
                   </FlexItem>
                   <FlexItem headers='h1'>${product.actual_price}</FlexItem>
                   <FlexItem>{product.about_product}</FlexItem>
