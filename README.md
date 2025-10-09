@@ -1,9 +1,18 @@
-# Product Recommender System (AI Quickstart)
+# Boost online sales with AI-powered recommendations
 
+See how AI can transform product discovery with personalized recommendations, smart review summaries, and intelligent search for any online store.
 
 ## Detailed description
 
-A complete, cloud-native product recommender that showcases search, recommendations, reviews, and a Kubeflow training pipeline on OpenShift AI.
+This quickstart shows how an e-commerce storefront can seamlessly integrate AI-driven product recommendations, automated review summarization, and enhanced search capabilities to improve customer engagement and conversion rates. 
+
+* **Product recommendations** deliver personalized suggestions based on browsing history and product similarity, helping customers discover what they love.
+* **Review summaries** distill countless reviews into actionable information, accelerating buying decisions.
+* **Intelligent search** uses a hybrid approach with semantic and symbolic search understanding customer intent, making it easier to find the perfect item.
+
+See how customers can get a better experience while business owners unlock higher click-through rates, better conversations and strong customer loyalty. 
+
+This quickstart is a complete, cloud-native product recommender system showcasing search, recommendations, reviews, and a Kubeflow training pipeline on OpenShift AI. Technical components include:
 - Backend (FastAPI) with PostgreSQL + pgvector + Feast
 - Frontend (React) with semantic text/image search
 - Training pipeline (Kubeflow Pipelines) to build and push embeddings
