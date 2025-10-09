@@ -1,10 +1,9 @@
 # Product Recommender System (AI Quickstart)
 
-A complete, cloud-native product recommender that showcases search, recommendations, reviews, and a Kubeflow training pipeline on OpenShift AI.
 
 ## Detailed description
 
-### What you get
+A complete, cloud-native product recommender that showcases search, recommendations, reviews, and a Kubeflow training pipeline on OpenShift AI.
 - Backend (FastAPI) with PostgreSQL + pgvector + Feast
 - Frontend (React) with semantic text/image search
 - Training pipeline (Kubeflow Pipelines) to build and push embeddings
@@ -123,6 +122,6 @@ Detailed docs live in component READMEs:
 
 ## Tags 
 
-* **Industry:** 
-* **Product:** 
-* **Use case:** 
+* **Industry:** Retail
+* **Product:** OpenShift AI 
+* **Use case:** Personalization 
