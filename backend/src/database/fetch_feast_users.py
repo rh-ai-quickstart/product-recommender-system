@@ -34,8 +34,8 @@ def generate_display_name(user_id: str) -> str:
     elif user_id.startswith("user"):
         return f"User {user_id[4:]}"
     else:
-        # For Feast user IDs, create anonymous names
-        return f"User {user_id[-4:]}"  # Use last 4 characters for uniqueness
+        # For Feast user IDs, create anonymous names using full user_id for uniqueness
+        return f"User {user_id}"  # Use full user_id to ensure uniqueness
 
 
 async def seed_users():

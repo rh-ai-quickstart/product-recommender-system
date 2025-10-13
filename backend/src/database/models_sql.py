@@ -13,7 +13,7 @@ class User(Base):
 
     user_id: Mapped[str] = mapped_column(String(27), primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True)
-    display_name: Mapped[str] = mapped_column(String, nullable=False)  # Required field for public display
+    display_name: Mapped[str] = mapped_column(String, nullable=False, unique=True, index=True)  # Required field for public display, must be unique
     password: Mapped[str] = mapped_column(
         String, nullable=True
     )  # raw (used only for mock data/gen)

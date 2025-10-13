@@ -104,6 +104,18 @@ export const authService = {
   isAuthenticated: (): boolean => {
     return validateToken().isValid;
   },
+
+  // Check display name availability
+  checkDisplayNameAvailability: async (displayName: string): Promise<boolean> => {
+    const response = await apiCall(`/auth/check-display-name/${encodeURIComponent(displayName)}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to check display name availability');
+    }
+    
+    const result = await response.json();
+    return result.available;
+  },
 };
 
 // Centralized token validation utility

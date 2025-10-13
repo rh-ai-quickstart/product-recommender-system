@@ -16,6 +16,7 @@ import { useForm } from '@tanstack/react-form';
 import { EyeIcon, EyeSlashIcon, PaperPlaneIcon } from '@patternfly/react-icons';
 import { useState } from 'react';
 import { useSignup } from '../hooks/useAuth';
+import { authService } from '../services/auth';
 
 export const SimpleSignupPage: React.FunctionComponent = () => {
   // const navigate = useNavigate();
@@ -138,6 +139,25 @@ export const SimpleSignupPage: React.FunctionComponent = () => {
               }
               return undefined;
             },
+            onChangeAsync: async ({ value }) => {
+              if (!value || value.length < 2 || value.length > 50) {
+                return undefined; // Let onChange validation handle these cases
+              }
+              
+              // Add a small delay to debounce the API calls
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              try {
+                const isAvailable = await authService.checkDisplayNameAvailability(value);
+                if (!isAvailable) {
+                  return 'Display name is already taken';
+                }
+                return undefined;
+              } catch (error) {
+                // Don't show error for network issues, let the user proceed
+                return undefined;
+              }
+            },
           }}
         >
           {field => (
@@ -153,12 +173,25 @@ export const SimpleSignupPage: React.FunctionComponent = () => {
                 validated={
                   !field.state.meta.isTouched
                     ? 'default'
-                    : field.state.meta.errors.length > 0
-                      ? 'error'
-                      : 'success'
+                    : field.state.meta.isValidating
+                      ? 'default' // Show neutral state while validating
+                      : field.state.meta.errors.length > 0
+                        ? 'error'
+                        : 'success'
                 }
               />
-              {field.state.meta.errors.length > 0 && (
+              {field.state.meta.isValidating && (
+                <div
+                  style={{
+                    color: '#6a6e73',
+                    fontSize: '14px',
+                    marginTop: '4px',
+                  }}
+                >
+                  Checking availability...
+                </div>
+              )}
+              {!field.state.meta.isValidating && field.state.meta.errors.length > 0 && (
                 <div
                   style={{
                     color: '#c9190b',
