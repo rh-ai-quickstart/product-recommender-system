@@ -1,52 +1,1204 @@
-# Test Users Configuration
-# These users will be created with known passwords and mapped to real Feast user IDs
-# during database seeding for testing and development purposes.
-
 test_users:
-  - email: "demo1@example.com"
-    password: "demo123"
-    age: 28
-    gender: "Female"
-    preferences: "Electronics,Books"
-    description: "Electronics & Books enthusiast"
-
-  - email: "demo2@example.com"
-    password: "demo123"
-    age: 35
-    gender: "Male"
-    preferences: "Sports,Home"
-    description: "Sports & Home products"
-
-  - email: "demo3@example.com"
-    password: "demo123"
-    age: 24
-    gender: "Other"
-    preferences: "Clothing,Books,Electronics"
-    description: "Clothing & Books & Electronics"
-
-  - email: "demo4@example.com"
-    password: "demo123"
-    age: 32
-    gender: "Female"
-    preferences: "Electronics,Sports,Home"
-    description: "Electronics & Sports & Home"
-
-  - email: "demo5@example.com"
-    password: "demo123"
-    age: 29
-    gender: "Male"
-    preferences: "Books,Electronics"
-    description: "Books & Electronics"
-
-# Configuration
+- email: demo1@example.com
+  password: demo123
+  age: 28
+  gender: Female
+  preferences: Electronics,Books
+  description: Electronics & Books enthusiast
+  display_name: Demo User 1
+- email: demo2@example.com
+  password: demo123
+  age: 35
+  gender: Male
+  preferences: Sports,Home
+  description: Sports & Home products
+  display_name: Demo User 2
+- email: demo3@example.com
+  password: demo123
+  age: 24
+  gender: Other
+  preferences: Clothing,Books,Electronics
+  description: Clothing & Books & Electronics
+  display_name: Demo User 3
+- email: demo4@example.com
+  password: demo123
+  age: 32
+  gender: Female
+  preferences: Electronics,Sports,Home
+  description: Electronics & Sports & Home
+  display_name: Demo User 4
+- email: demo5@example.com
+  password: demo123
+  age: 29
+  gender: Male
+  preferences: Books,Electronics
+  description: Books & Electronics
+  display_name: Demo User 5
+- email: user6@example.com
+  password: user123
+  age: 26
+  gender: Female
+  preferences: Electronics
+  description: Tech gadget lover
+  display_name: User 6
+- email: user7@example.com
+  password: user123
+  age: 31
+  gender: Male
+  preferences: Electronics,Sports
+  description: Gaming and fitness enthusiast
+  display_name: User 7
+- email: user8@example.com
+  password: user123
+  age: 23
+  gender: Female
+  preferences: Books,Clothing
+  description: Reader and fashion conscious
+  display_name: User 8
+- email: user9@example.com
+  password: user123
+  age: 45
+  gender: Male
+  preferences: Home,Electronics
+  description: Smart home enthusiast
+  display_name: User 9
+- email: user10@example.com
+  password: user123
+  age: 27
+  gender: Other
+  preferences: Books
+  description: Avid reader
+  display_name: User 10
+- email: user11@example.com
+  password: user123
+  age: 33
+  gender: Female
+  preferences: Sports,Clothing
+  description: Athletic wear enthusiast
+  display_name: User 11
+- email: user12@example.com
+  password: user123
+  age: 29
+  gender: Male
+  preferences: Electronics,Books
+  description: Tech and learning focused
+  display_name: User 12
+- email: user13@example.com
+  password: user123
+  age: 38
+  gender: Female
+  preferences: Home,Books
+  description: Home improvement and reading
+  display_name: User 13
+- email: user14@example.com
+  password: user123
+  age: 25
+  gender: Male
+  preferences: Sports
+  description: Sports equipment enthusiast
+  display_name: User 14
+- email: user15@example.com
+  password: user123
+  age: 42
+  gender: Other
+  preferences: Home,Clothing
+  description: Home decor and style
+  display_name: User 15
+- email: user16@example.com
+  password: user123
+  age: 30
+  gender: Female
+  preferences: Electronics,Clothing
+  description: Wearable tech enthusiast
+  display_name: User 16
+- email: user17@example.com
+  password: user123
+  age: 34
+  gender: Male
+  preferences: Books,Sports
+  description: Fitness and learning
+  display_name: User 17
+- email: user18@example.com
+  password: user123
+  age: 28
+  gender: Female
+  preferences: Home
+  description: Interior design lover
+  display_name: User 18
+- email: user19@example.com
+  password: user123
+  age: 36
+  gender: Male
+  preferences: Electronics,Home
+  description: Smart home technology
+  display_name: User 19
+- email: user20@example.com
+  password: user123
+  age: 22
+  gender: Other
+  preferences: Clothing
+  description: Fashion forward
+  display_name: User 20
+- email: user21@example.com
+  password: user123
+  age: 40
+  gender: Female
+  preferences: Books,Home
+  description: Cozy home reader
+  display_name: User 21
+- email: user22@example.com
+  password: user123
+  age: 27
+  gender: Male
+  preferences: Sports,Electronics
+  description: Fitness tech enthusiast
+  display_name: User 22
+- email: user23@example.com
+  password: user123
+  age: 35
+  gender: Female
+  preferences: Clothing,Books
+  description: Style and substance
+  display_name: User 23
+- email: user24@example.com
+  password: user123
+  age: 31
+  gender: Male
+  preferences: Electronics
+  description: Gadget collector
+  display_name: User 24
+- email: user25@example.com
+  password: user123
+  age: 26
+  gender: Other
+  preferences: Sports,Home
+  description: Active home organizer
+  display_name: User 25
+- email: user26@example.com
+  password: user123
+  age: 39
+  gender: Female
+  preferences: Home,Electronics
+  description: Connected home enthusiast
+  display_name: User 26
+- email: user27@example.com
+  password: user123
+  age: 24
+  gender: Male
+  preferences: Books,Electronics
+  description: Digital learning advocate
+  display_name: User 27
+- email: user28@example.com
+  password: user123
+  age: 32
+  gender: Female
+  preferences: Clothing,Sports
+  description: Active lifestyle dresser
+  display_name: User 28
+- email: user29@example.com
+  password: user123
+  age: 37
+  gender: Male
+  preferences: Home,Books
+  description: Home library curator
+  display_name: User 29
+- email: user30@example.com
+  password: user123
+  age: 28
+  gender: Other
+  preferences: Electronics,Clothing
+  description: Tech fashion enthusiast
+  display_name: User 30
+- email: user31@example.com
+  password: user123
+  age: 33
+  gender: Female
+  preferences: Sports
+  description: Fitness equipment specialist
+  display_name: User 31
+- email: user32@example.com
+  password: user123
+  age: 29
+  gender: Male
+  preferences: Books
+  description: Knowledge seeker
+  display_name: User 32
+- email: user33@example.com
+  password: user123
+  age: 41
+  gender: Female
+  preferences: Home
+  description: Home comfort specialist
+  display_name: User 33
+- email: user34@example.com
+  password: user123
+  age: 25
+  gender: Male
+  preferences: Electronics,Sports
+  description: Tech-enabled athlete
+  display_name: User 34
+- email: user35@example.com
+  password: user123
+  age: 30
+  gender: Other
+  preferences: Clothing,Books
+  description: Intellectual fashionista
+  display_name: User 35
+- email: user36@example.com
+  password: user123
+  age: 34
+  gender: Female
+  preferences: Electronics,Home
+  description: Smart living advocate
+  display_name: User 36
+- email: user37@example.com
+  password: user123
+  age: 27
+  gender: Male
+  preferences: Sports,Books
+  description: Mind and body fitness
+  display_name: User 37
+- email: user38@example.com
+  password: user123
+  age: 36
+  gender: Female
+  preferences: Clothing
+  description: Style maven
+  display_name: User 38
+- email: user39@example.com
+  password: user123
+  age: 23
+  gender: Male
+  preferences: Electronics
+  description: Early tech adopter
+  display_name: User 39
+- email: user40@example.com
+  password: user123
+  age: 38
+  gender: Other
+  preferences: Home,Sports
+  description: Active home enthusiast
+  display_name: User 40
+- email: user41@example.com
+  password: user123
+  age: 32
+  gender: Female
+  preferences: Books,Electronics
+  description: Digital bookworm
+  display_name: User 41
+- email: user42@example.com
+  password: user123
+  age: 26
+  gender: Male
+  preferences: Clothing,Home
+  description: Style and comfort
+  display_name: User 42
+- email: user43@example.com
+  password: user123
+  age: 35
+  gender: Female
+  preferences: Sports,Electronics
+  description: Fitness tech user
+  display_name: User 43
+- email: user44@example.com
+  password: user123
+  age: 29
+  gender: Male
+  preferences: Books,Home
+  description: Comfortable reader
+  display_name: User 44
+- email: user45@example.com
+  password: user123
+  age: 31
+  gender: Other
+  preferences: Clothing,Sports
+  description: Athletic fashion lover
+  display_name: User 45
+- email: user46@example.com
+  password: user123
+  age: 28
+  gender: Female
+  preferences: Electronics
+  description: Tech professional
+  display_name: User 46
+- email: user47@example.com
+  password: user123
+  age: 40
+  gender: Male
+  preferences: Home
+  description: Home improvement expert
+  display_name: User 47
+- email: user48@example.com
+  password: user123
+  age: 24
+  gender: Female
+  preferences: Books,Clothing
+  description: Literary fashion enthusiast
+  display_name: User 48
+- email: user49@example.com
+  password: user123
+  age: 37
+  gender: Male
+  preferences: Sports
+  description: Sports gear collector
+  display_name: User 49
+- email: user50@example.com
+  password: user123
+  age: 33
+  gender: Other
+  preferences: Electronics,Books
+  description: Tech and education focused
+  display_name: User 50
+- email: user51@example.com
+  password: user123
+  age: 27
+  gender: Female
+  preferences: Clothing,Electronics
+  description: Fashion tech enthusiast
+  display_name: User 51
+- email: user52@example.com
+  password: user123
+  age: 39
+  gender: Male
+  preferences: Home,Sports
+  description: Active homeowner
+  display_name: User 52
+- email: user53@example.com
+  password: user123
+  age: 25
+  gender: Female
+  preferences: Books
+  description: Literature lover
+  display_name: User 53
+- email: user54@example.com
+  password: user123
+  age: 34
+  gender: Male
+  preferences: Electronics,Home
+  description: Home automation enthusiast
+  display_name: User 54
+- email: user55@example.com
+  password: user123
+  age: 30
+  gender: Other
+  preferences: Sports,Books
+  description: Athletic scholar
+  display_name: User 55
+- email: user56@example.com
+  password: user123
+  age: 26
+  gender: Female
+  preferences: Clothing
+  description: Wardrobe curator
+  display_name: User 56
+- email: user57@example.com
+  password: user123
+  age: 42
+  gender: Male
+  preferences: Electronics
+  description: Tech veteran
+  display_name: User 57
+- email: user58@example.com
+  password: user123
+  age: 28
+  gender: Female
+  preferences: Home,Books
+  description: Cozy reading nook creator
+  display_name: User 58
+- email: user59@example.com
+  password: user123
+  age: 35
+  gender: Male
+  preferences: Sports,Clothing
+  description: Athletic wear specialist
+  display_name: User 59
+- email: user60@example.com
+  password: user123
+  age: 31
+  gender: Other
+  preferences: Electronics,Sports
+  description: Fitness technology advocate
+  display_name: User 60
+- email: user61@example.com
+  password: user123
+  age: 29
+  gender: Female
+  preferences: Books,Home
+  description: Home library designer
+  display_name: User 61
+- email: user62@example.com
+  password: user123
+  age: 36
+  gender: Male
+  preferences: Clothing,Electronics
+  description: Wearable tech adopter
+  display_name: User 62
+- email: user63@example.com
+  password: user123
+  age: 23
+  gender: Female
+  preferences: Sports
+  description: Young athlete
+  display_name: User 63
+- email: user64@example.com
+  password: user123
+  age: 41
+  gender: Male
+  preferences: Home
+  description: Home comfort specialist
+  display_name: User 64
+- email: user65@example.com
+  password: user123
+  age: 27
+  gender: Other
+  preferences: Books,Clothing
+  description: Intellectual style enthusiast
+  display_name: User 65
+- email: user66@example.com
+  password: user123
+  age: 33
+  gender: Female
+  preferences: Electronics
+  description: Innovation early adopter
+  display_name: User 66
+- email: user67@example.com
+  password: user123
+  age: 38
+  gender: Male
+  preferences: Sports,Home
+  description: Home gym builder
+  display_name: User 67
+- email: user68@example.com
+  password: user123
+  age: 24
+  gender: Female
+  preferences: Clothing,Books
+  description: Fashion and literature
+  display_name: User 68
+- email: user69@example.com
+  password: user123
+  age: 32
+  gender: Male
+  preferences: Electronics,Books
+  description: Tech learning enthusiast
+  display_name: User 69
+- email: user70@example.com
+  password: user123
+  age: 30
+  gender: Other
+  preferences: Home,Sports
+  description: Active lifestyle organizer
+  display_name: User 70
+- email: user71@example.com
+  password: user123
+  age: 26
+  gender: Female
+  preferences: Clothing,Electronics
+  description: Smart fashion enthusiast
+  display_name: User 71
+- email: user72@example.com
+  password: user123
+  age: 40
+  gender: Male
+  preferences: Books
+  description: Seasoned reader
+  display_name: User 72
+- email: user73@example.com
+  password: user123
+  age: 28
+  gender: Female
+  preferences: Sports
+  description: Fitness enthusiast
+  display_name: User 73
+- email: user74@example.com
+  password: user123
+  age: 37
+  gender: Male
+  preferences: Home,Electronics
+  description: Smart home pioneer
+  display_name: User 74
+- email: user75@example.com
+  password: user123
+  age: 25
+  gender: Other
+  preferences: Clothing
+  description: Style experimenter
+  display_name: User 75
+- email: user76@example.com
+  password: user123
+  age: 34
+  gender: Female
+  preferences: Books,Sports
+  description: Mind-body balance seeker
+  display_name: User 76
+- email: user77@example.com
+  password: user123
+  age: 31
+  gender: Male
+  preferences: Electronics
+  description: Gadget enthusiast
+  display_name: User 77
+- email: user78@example.com
+  password: user123
+  age: 29
+  gender: Female
+  preferences: Home
+  description: Nest builder
+  display_name: User 78
+- email: user79@example.com
+  password: user123
+  age: 36
+  gender: Male
+  preferences: Sports,Books
+  description: Athletic intellectual
+  display_name: User 79
+- email: user80@example.com
+  password: user123
+  age: 22
+  gender: Other
+  preferences: Clothing,Electronics
+  description: Tech fashion forward
+  display_name: User 80
+- email: user81@example.com
+  password: user123
+  age: 39
+  gender: Female
+  preferences: Home,Books
+  description: Comfortable knowledge seeker
+  display_name: User 81
+- email: user82@example.com
+  password: user123
+  age: 27
+  gender: Male
+  preferences: Electronics,Sports
+  description: Tech-enhanced performance
+  display_name: User 82
+- email: user83@example.com
+  password: user123
+  age: 35
+  gender: Female
+  preferences: Clothing
+  description: Personal style curator
+  display_name: User 83
+- email: user84@example.com
+  password: user123
+  age: 32
+  gender: Male
+  preferences: Books,Home
+  description: Study space designer
+  display_name: User 84
+- email: user85@example.com
+  password: user123
+  age: 28
+  gender: Other
+  preferences: Sports
+  description: Competitive spirit
+  display_name: User 85
+- email: user86@example.com
+  password: user123
+  age: 41
+  gender: Female
+  preferences: Electronics,Home
+  description: Connected living advocate
+  display_name: User 86
+- email: user87@example.com
+  password: user123
+  age: 24
+  gender: Male
+  preferences: Clothing,Sports
+  description: Athletic fashion enthusiast
+  display_name: User 87
+- email: user88@example.com
+  password: user123
+  age: 33
+  gender: Female
+  preferences: Books
+  description: Devoted reader
+  display_name: User 88
+- email: user89@example.com
+  password: user123
+  age: 30
+  gender: Male
+  preferences: Electronics
+  description: Tech solution seeker
+  display_name: User 89
+- email: user90@example.com
+  password: user123
+  age: 26
+  gender: Other
+  preferences: Home,Clothing
+  description: Stylish home decorator
+  display_name: User 90
+- email: user91@example.com
+  password: user123
+  age: 38
+  gender: Female
+  preferences: Sports,Electronics
+  description: Fitness tech optimizer
+  display_name: User 91
+- email: user92@example.com
+  password: user123
+  age: 29
+  gender: Male
+  preferences: Books,Clothing
+  description: Scholarly style
+  display_name: User 92
+- email: user93@example.com
+  password: user123
+  age: 37
+  gender: Female
+  preferences: Home
+  description: Domestic comfort expert
+  display_name: User 93
+- email: user94@example.com
+  password: user123
+  age: 25
+  gender: Male
+  preferences: Sports
+  description: Athletic performance focused
+  display_name: User 94
+- email: user95@example.com
+  password: user123
+  age: 34
+  gender: Other
+  preferences: Electronics,Books
+  description: Digital knowledge worker
+  display_name: User 95
+- email: user96@example.com
+  password: user123
+  age: 31
+  gender: Female
+  preferences: Clothing,Home
+  description: Style and comfort balance
+  display_name: User 96
+- email: user97@example.com
+  password: user123
+  age: 28
+  gender: Male
+  preferences: Sports,Home
+  description: Active home lifestyle
+  display_name: User 97
+- email: user98@example.com
+  password: user123
+  age: 40
+  gender: Female
+  preferences: Books,Electronics
+  description: Digital learning enthusiast
+  display_name: User 98
+- email: user99@example.com
+  password: user123
+  age: 23
+  gender: Male
+  preferences: Clothing
+  description: Fashion conscious youth
+  display_name: User 99
+- email: user100@example.com
+  password: user123
+  age: 36
+  gender: Other
+  preferences: Electronics
+  description: Technology professional
+  display_name: User 100
+- email: user101@example.com
+  password: user123
+  age: 32
+  gender: Female
+  preferences: Home,Sports
+  description: Active home manager
+  display_name: User 101
+- email: user102@example.com
+  password: user123
+  age: 27
+  gender: Male
+  preferences: Books
+  description: Continuous learner
+  display_name: User 102
+- email: user103@example.com
+  password: user123
+  age: 35
+  gender: Female
+  preferences: Clothing,Electronics
+  description: Smart wardrobe builder
+  display_name: User 103
+- email: user104@example.com
+  password: user123
+  age: 29
+  gender: Male
+  preferences: Sports,Books
+  description: Physical and mental training
+  display_name: User 104
+- email: user105@example.com
+  password: user123
+  age: 33
+  gender: Other
+  preferences: Home
+  description: Living space optimizer
+  display_name: User 105
+- email: user106@example.com
+  password: user123
+  age: 26
+  gender: Female
+  preferences: Electronics,Sports
+  description: Tech-enabled fitness
+  display_name: User 106
+- email: user107@example.com
+  password: user123
+  age: 39
+  gender: Male
+  preferences: Clothing
+  description: Professional wardrobe curator
+  display_name: User 107
+- email: user108@example.com
+  password: user123
+  age: 24
+  gender: Female
+  preferences: Books,Home
+  description: Cozy study environment
+  display_name: User 108
+- email: user109@example.com
+  password: user123
+  age: 31
+  gender: Male
+  preferences: Electronics
+  description: Innovation tracker
+  display_name: User 109
+- email: user110@example.com
+  password: user123
+  age: 28
+  gender: Other
+  preferences: Sports,Clothing
+  description: Athletic style enthusiast
+  display_name: User 110
+- email: user111@example.com
+  password: user123
+  age: 37
+  gender: Female
+  preferences: Home,Books
+  description: Intellectual home designer
+  display_name: User 111
+- email: user112@example.com
+  password: user123
+  age: 30
+  gender: Male
+  preferences: Electronics,Home
+  description: Smart living implementer
+  display_name: User 112
+- email: user113@example.com
+  password: user123
+  age: 25
+  gender: Female
+  preferences: Clothing
+  description: Trend follower
+  display_name: User 113
+- email: user114@example.com
+  password: user123
+  age: 34
+  gender: Male
+  preferences: Sports
+  description: Equipment specialist
+  display_name: User 114
+- email: user115@example.com
+  password: user123
+  age: 32
+  gender: Other
+  preferences: Books,Electronics
+  description: Digital research enthusiast
+  display_name: User 115
+- email: user116@example.com
+  password: user123
+  age: 29
+  gender: Female
+  preferences: Home,Clothing
+  description: Stylish living advocate
+  display_name: User 116
+- email: user117@example.com
+  password: user123
+  age: 38
+  gender: Male
+  preferences: Sports,Electronics
+  description: Performance technology user
+  display_name: User 117
+- email: user118@example.com
+  password: user123
+  age: 26
+  gender: Female
+  preferences: Books
+  description: Knowledge collector
+  display_name: User 118
+- email: user119@example.com
+  password: user123
+  age: 35
+  gender: Male
+  preferences: Electronics
+  description: Tech ecosystem builder
+  display_name: User 119
+- email: user120@example.com
+  password: user123
+  age: 23
+  gender: Other
+  preferences: Clothing,Sports
+  description: Active fashion enthusiast
+  display_name: User 120
+- email: user121@example.com
+  password: user123
+  age: 41
+  gender: Female
+  preferences: Home
+  description: Sanctuary creator
+  display_name: User 121
+- email: user122@example.com
+  password: user123
+  age: 27
+  gender: Male
+  preferences: Books,Sports
+  description: Balanced development seeker
+  display_name: User 122
+- email: user123@example.com
+  password: user123
+  age: 33
+  gender: Female
+  preferences: Electronics,Clothing
+  description: Tech fashion integrator
+  display_name: User 123
+- email: user124@example.com
+  password: user123
+  age: 30
+  gender: Male
+  preferences: Home,Sports
+  description: Active lifestyle designer
+  display_name: User 124
+- email: user125@example.com
+  password: user123
+  age: 28
+  gender: Other
+  preferences: Books,Home
+  description: Comfortable learning space
+  display_name: User 125
+- email: user126@example.com
+  password: user123
+  age: 36
+  gender: Female
+  preferences: Clothing
+  description: Style investment specialist
+  display_name: User 126
+- email: user127@example.com
+  password: user123
+  age: 24
+  gender: Male
+  preferences: Electronics
+  description: Next-gen tech adopter
+  display_name: User 127
+- email: user128@example.com
+  password: user123
+  age: 31
+  gender: Female
+  preferences: Sports
+  description: Fitness journey optimizer
+  display_name: User 128
+- email: user129@example.com
+  password: user123
+  age: 39
+  gender: Male
+  preferences: Home,Electronics
+  description: Automated living enthusiast
+  display_name: User 129
+- email: user130@example.com
+  password: user123
+  age: 25
+  gender: Other
+  preferences: Books,Clothing
+  description: Literary fashion explorer
+  display_name: User 130
+- email: user131@example.com
+  password: user123
+  age: 34
+  gender: Female
+  preferences: Sports,Home
+  description: Active home organizer
+  display_name: User 131
+- email: user132@example.com
+  password: user123
+  age: 29
+  gender: Male
+  preferences: Electronics,Books
+  description: Tech education advocate
+  display_name: User 132
+- email: user133@example.com
+  password: user123
+  age: 37
+  gender: Female
+  preferences: Clothing
+  description: Wardrobe strategist
+  display_name: User 133
+- email: user134@example.com
+  password: user123
+  age: 26
+  gender: Male
+  preferences: Sports
+  description: Performance optimizer
+  display_name: User 134
+- email: user135@example.com
+  password: user123
+  age: 32
+  gender: Other
+  preferences: Home
+  description: Living space curator
+  display_name: User 135
+- email: user136@example.com
+  password: user123
+  age: 28
+  gender: Female
+  preferences: Electronics,Sports
+  description: Fitness technology pioneer
+  display_name: User 136
+- email: user137@example.com
+  password: user123
+  age: 35
+  gender: Male
+  preferences: Books,Clothing
+  description: Intellectual style advocate
+  display_name: User 137
+- email: user138@example.com
+  password: user123
+  age: 30
+  gender: Female
+  preferences: Home,Books
+  description: Knowledge sanctuary builder
+  display_name: User 138
+- email: user139@example.com
+  password: user123
+  age: 27
+  gender: Male
+  preferences: Electronics
+  description: Digital lifestyle optimizer
+  display_name: User 139
+- email: user140@example.com
+  password: user123
+  age: 33
+  gender: Other
+  preferences: Sports,Clothing
+  description: Athletic fashion coordinator
+  display_name: User 140
+- email: user141@example.com
+  password: user123
+  age: 38
+  gender: Female
+  preferences: Home
+  description: Comfort zone architect
+  display_name: User 141
+- email: user142@example.com
+  password: user123
+  age: 24
+  gender: Male
+  preferences: Books
+  description: Young scholar
+  display_name: User 142
+- email: user143@example.com
+  password: user123
+  age: 31
+  gender: Female
+  preferences: Electronics,Home
+  description: Connected living specialist
+  display_name: User 143
+- email: user144@example.com
+  password: user123
+  age: 29
+  gender: Male
+  preferences: Sports
+  description: Athletic performance tracker
+  display_name: User 144
+- email: user145@example.com
+  password: user123
+  age: 36
+  gender: Other
+  preferences: Clothing,Books
+  description: Stylish intellectual
+  display_name: User 145
+- email: user146@example.com
+  password: user123
+  age: 25
+  gender: Female
+  preferences: Electronics
+  description: Tech lifestyle adopter
+  display_name: User 146
+- email: user147@example.com
+  password: user123
+  age: 40
+  gender: Male
+  preferences: Home,Sports
+  description: Active home enthusiast
+  display_name: User 147
+- email: user148@example.com
+  password: user123
+  age: 32
+  gender: Female
+  preferences: Books,Sports
+  description: Mind-body wellness seeker
+  display_name: User 148
+- email: user149@example.com
+  password: user123
+  age: 28
+  gender: Male
+  preferences: Clothing,Electronics
+  description: Wearable tech enthusiast
+  display_name: User 149
+- email: user150@example.com
+  password: user123
+  age: 34
+  gender: Other
+  preferences: Home,Books,Electronics
+  description: Smart home reader
+  display_name: User 150
 config:
-  # How many users to select from Feast dataset
-  feast_users_to_select: 5
-
-  # Fallback user IDs if Feast is unavailable
+  feast_users_to_select: 150
   fallback_user_ids:
-    - "demo1"
-    - "demo2"
-    - "demo3"
-    - "demo4"
-    - "demo5"
+  - demo1
+  - demo2
+  - demo3
+  - demo4
+  - demo5
+  - user6
+  - user7
+  - user8
+  - user9
+  - user10
+  - user11
+  - user12
+  - user13
+  - user14
+  - user15
+  - user16
+  - user17
+  - user18
+  - user19
+  - user20
+  - user21
+  - user22
+  - user23
+  - user24
+  - user25
+  - user26
+  - user27
+  - user28
+  - user29
+  - user30
+  - user31
+  - user32
+  - user33
+  - user34
+  - user35
+  - user36
+  - user37
+  - user38
+  - user39
+  - user40
+  - user41
+  - user42
+  - user43
+  - user44
+  - user45
+  - user46
+  - user47
+  - user48
+  - user49
+  - user50
+  - user51
+  - user52
+  - user53
+  - user54
+  - user55
+  - user56
+  - user57
+  - user58
+  - user59
+  - user60
+  - user61
+  - user62
+  - user63
+  - user64
+  - user65
+  - user66
+  - user67
+  - user68
+  - user69
+  - user70
+  - user71
+  - user72
+  - user73
+  - user74
+  - user75
+  - user76
+  - user77
+  - user78
+  - user79
+  - user80
+  - user81
+  - user82
+  - user83
+  - user84
+  - user85
+  - user86
+  - user87
+  - user88
+  - user89
+  - user90
+  - user91
+  - user92
+  - user93
+  - user94
+  - user95
+  - user96
+  - user97
+  - user98
+  - user99
+  - user100
+  - user101
+  - user102
+  - user103
+  - user104
+  - user105
+  - user106
+  - user107
+  - user108
+  - user109
+  - user110
+  - user111
+  - user112
+  - user113
+  - user114
+  - user115
+  - user116
+  - user117
+  - user118
+  - user119
+  - user120
+  - user121
+  - user122
+  - user123
+  - user124
+  - user125
+  - user126
+  - user127
+  - user128
+  - user129
+  - user130
+  - user131
+  - user132
+  - user133
+  - user134
+  - user135
+  - user136
+  - user137
+  - user138
+  - user139
+  - user140
+  - user141
+  - user142
+  - user143
+  - user144
+  - user145
+  - user146
+  - user147
+  - user148
+  - user149
+  - user150

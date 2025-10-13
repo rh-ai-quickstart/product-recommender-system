@@ -18,6 +18,7 @@ import {
   useCreateProductReview,
 } from '../hooks/useReviews';
 import { ReviewSummarizationModal } from './ReviewSummarizationModal';
+import { useAuth } from '../contexts/AuthProvider';
 
 const AddReviewInline = ({
   onSubmit,
@@ -112,6 +113,9 @@ export const ProductDetails = () => {
   // loads productId from route /product/$productId
   const { productId } = Route.useLoaderData();
 
+  // Get current user information
+  const { user } = useAuth();
+
   // Use our composite hook for all product actions
   const { product, error, isLoading, addToCart, isAddingToCart, recordClick } =
     useProductActions(productId);
@@ -120,6 +124,11 @@ export const ProductDetails = () => {
   const reviewsQuery = useProductReviews(productId);
   const summaryQuery = useProductReviewSummary(productId);
   const createReview = useCreateProductReview(productId);
+
+  // Check if current user has already reviewed this product
+  const userHasReviewed = reviewsQuery.data?.some(
+    review => review.userId === user?.user_id
+  ) ?? false;
 
   // State for review summarization modal
   const [showSummarizeModal, setShowSummarizeModal] = useState(false);
@@ -226,12 +235,25 @@ export const ProductDetails = () => {
                             AI Summarize ✨
                           </Button>
                         )}
-                        <AddReviewInline
-                          onSubmit={async (rating, title, comment) => {
-                            await createReview.mutateAsync({ rating, title, comment });
-                          }}
-                          isSubmitting={createReview.isPending}
-                        />
+                        {!userHasReviewed ? (
+                          <AddReviewInline
+                            onSubmit={async (rating, title, comment) => {
+                              await createReview.mutateAsync({ rating, title, comment });
+                            }}
+                            isSubmitting={createReview.isPending}
+                          />
+                        ) : (
+                          <div style={{ 
+                            padding: '0.5rem', 
+                            background: '#f0f8ff', 
+                            border: '1px solid #d4edda', 
+                            borderRadius: '4px',
+                            fontSize: '0.9rem',
+                            color: '#155724'
+                          }}>
+                            ✓ You have already reviewed this product
+                          </div>
+                        )}
                       </div>
                     </div>
                     {summaryQuery.isLoading ? (
@@ -285,8 +307,13 @@ export const ProductDetails = () => {
                             <div style={{ fontSize: '0.9rem', color: '#444' }}>
                               {r.comment}
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: '#777' }}>
-                              {new Date(r.created_at).toLocaleDateString()}
+                            <div style={{ fontSize: '0.75rem', color: '#777', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>
+                                By: {r.userName || 'Anonymous'}
+                              </span>
+                              <span>
+                                {new Date(r.created_at).toLocaleDateString()}
+                              </span>
                             </div>
                           </div>
                         ))}

@@ -26,6 +26,18 @@ def generate_password(length=10) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
+def generate_display_name(user_id: str) -> str:
+    """Generate a friendly display name from user_id"""
+    # For fallback user IDs (demo1, user6, etc.), create readable names
+    if user_id.startswith("demo"):
+        return f"Demo User {user_id[4:]}"
+    elif user_id.startswith("user"):
+        return f"User {user_id[4:]}"
+    else:
+        # For Feast user IDs, create anonymous names
+        return f"User {user_id[-4:]}"  # Use last 4 characters for uniqueness
+
+
 async def seed_users():
     users: pd.DataFrame = FeastService().get_all_existing_users()
 
@@ -71,6 +83,7 @@ async def seed_users():
         # Generate emails and passwords for remaining Feast users only
         users_to_add["email"] = users_to_add["user_id"].astype(str).apply(generate_email)
         users_to_add["password"] = users_to_add["user_id"].apply(lambda _: generate_password())
+        users_to_add["display_name"] = users_to_add["user_id"].astype(str).apply(generate_display_name)
 
         # Create User objects in batch
         user_objects = (
@@ -86,6 +99,7 @@ async def seed_users():
                 lambda row: User(
                     user_id=row["user_id"],
                     email=row["email"],
+                    display_name=row["display_name"],
                     age=row["age"],
                     gender=row["gender"],
                     signup_date=row["signup_date"],
@@ -133,7 +147,8 @@ def _load_test_user_config():
                     "age": 28,
                     "gender": "Female",
                     "preferences": "Electronics,Books",
-                    "description": "Fallback test user",
+                    "description": "Tech Enthusiast",
+                    "display_name": "Demo User 1",
                 }
             ],
             "config": {
@@ -203,6 +218,7 @@ async def _create_test_users(db, existing_user_ids: set):
             test_user = User(
                 user_id=user_data["user_id"],
                 email=user_data["email"],
+                display_name=user_data.get("display_name", user_data.get("description", f"User {user_data['user_id'][-4:]}")),  # Use display_name, fallback to description, then generated name
                 age=user_data["age"],
                 gender=user_data["gender"],
                 signup_date=date.today(),

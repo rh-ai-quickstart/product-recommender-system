@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.db import get_db
-from database.models_sql import Product, Review
+from database.models_sql import Product, Review, User
 from models import ProductReview, ProductReviewCreate, ReviewSummarization, ReviewSummary
 from routes.auth import get_current_user
 
@@ -56,7 +56,9 @@ async def _fetch_reviews_from_db(
             Review.title,
             Review.content,
             Review.created_at,
+            User.display_name.label("user_display_name"),
         )
+        .outerjoin(User, Review.user_id == User.user_id)  # Left join to handle null user_ids
         .where(Review.item_id == product_id)
         .order_by(Review.created_at.desc(), Review.id.desc())
         .limit(limit)
@@ -68,6 +70,7 @@ async def _fetch_reviews_from_db(
             id=row.id,
             productId=row.item_id,
             userId=row.user_id,
+            userName=row.user_display_name if row.user_display_name else "Anonymous User",
             rating=row.rating,
             title=row.title or "",
             comment=row.content or "",

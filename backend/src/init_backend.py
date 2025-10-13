@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from database.db import get_engine
 from database.fetch_feast_users import seed_users
-from database.models_sql import Base, Category, Product, Review
+from database.models_sql import Base, Category, Product, Review, User
 
 
 # Simple, description-aware review generators per rating
@@ -368,30 +368,93 @@ async def _load_reviews_from_cache(session: AsyncSession) -> int:
         valid_ids = {row[0] for row in rows}
         logger.info(f"[Reviews] DB valid product_ids={len(valid_ids)}")
 
+        # Get all available user IDs for assignment
+        user_result = await session.execute(select(User.user_id))
+        available_user_ids = [row[0] for row in user_result.fetchall()]
+        
+        if not available_user_ids:
+            logger.error("❌ No users found for cache review assignment")
+            return 0
+
         to_insert: list[Review] = []
+        total_processed = 0
+        total_skipped = 0
+        
         for prod in products:
             item_id = prod.get("item_id")
             if not item_id or item_id not in valid_ids:
                 logger.warning(f"[Reviews] Skipping cached reviews for unknown item_id={item_id}")
                 continue
+            
+            # Check existing reviews for this product to avoid duplicates
+            existing_reviews = (await session.execute(
+                select(Review.rating, Review.title, Review.content)
+                .where(Review.item_id == item_id)
+            )).all()
+            existing_set = {
+                (r.rating, r.title or None, r.content or None) 
+                for r in existing_reviews
+            }
+            
+            # Get users who haven't reviewed this product yet
+            existing_reviewers = await session.execute(
+                select(Review.user_id).where(Review.item_id == item_id)
+            )
+            used_user_ids = {row[0] for row in existing_reviewers.fetchall() if row[0] is not None}
+            available_users_for_product = [uid for uid in available_user_ids if uid not in used_user_ids]
+            
+            product_skipped = 0
+            product_added = 0
+            
             for r in prod.get("reviews", []):
                 rating = r.get("rating")
                 title = (r.get("title") or "").strip() or None
                 comment = (r.get("comment") or "").strip() or None
+                total_processed += 1
+                
                 if not isinstance(rating, int) or rating < 1 or rating > 5:
+                    total_skipped += 1
+                    product_skipped += 1
                     continue
+                
+                # Check if this review already exists
+                review_key = (rating, title, comment)
+                if review_key in existing_set:
+                    logger.debug(f"[Reviews] Skipping duplicate review for item_id={item_id} "
+                               f"rating={rating} title='{title}'")
+                    total_skipped += 1
+                    product_skipped += 1
+                    continue
+                
+                # Assign user ID for this review
+                if not available_users_for_product:
+                    logger.warning(f"[Reviews] No available users for product {item_id}, using random user")
+                    assigned_user_id = random.choice(available_user_ids)
+                else:
+                    assigned_user_id = available_users_for_product.pop(0)
+                
                 to_insert.append(
                     Review(
-                        item_id=item_id, user_id=None, rating=rating, title=title, content=comment
+                        item_id=item_id, user_id=assigned_user_id, rating=rating, title=title, content=comment
                     )
                 )
+                # Add to existing set to avoid duplicates within the same batch
+                existing_set.add(review_key)
+                product_added += 1
+            
+            if product_added > 0 or product_skipped > 0:
+                logger.info(f"[Reviews] Product {item_id}: added={product_added}, skipped={product_skipped}")
 
         if to_insert:
             logger.info(f"[Reviews] Preparing to insert cached reviews count={len(to_insert)}")
             session.add_all(to_insert)
             await session.commit()
-            logger.info(f"Loaded {len(to_insert)} reviews from cache file: {cache_path}")
+            logger.info(f"Loaded {len(to_insert)} reviews from cache file: {cache_path} "
+                       f"(processed={total_processed}, skipped={total_skipped})")
             return len(to_insert)
+        else:
+            logger.info(f"[Reviews] No new reviews to insert from cache "
+                       f"(processed={total_processed}, skipped={total_skipped})")
         return 0
     except Exception as ex:
         await session.rollback()
@@ -582,6 +645,7 @@ async def populate_reviews(
     Generate synthetic, description-aware reviews for each product.
     Ensures ratings range from 1..5 are represented per product, with 5-10 total reviews by
     default.
+    Each review is associated with a unique user (one review per user per product).
     If skip_if_exists is True and no reviews exist at all, generate; otherwise, top-up per product to
     minimum and fill missing ratings.
     """  # noqa: E501
@@ -594,6 +658,33 @@ async def populate_reviews(
     SessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
     async with SessionLocal() as session:
+        # Get all available user IDs for review assignment
+        user_result = await session.execute(select(User.user_id))
+        available_user_ids = [row[0] for row in user_result.fetchall()]
+        
+        if not available_user_ids:
+            logger.error("❌ No users found in database. Cannot create reviews without users.")
+            raise RuntimeError("No users available for review assignment. Run seed_users() first.")
+        
+        logger.info(f"[Reviews] Found {len(available_user_ids)} users available for review assignment")
+
+        # Helper function to get available users for a product (users who haven't reviewed it yet)
+        async def get_available_users_for_product(item_id: str) -> list[str]:
+            """Get list of user IDs who haven't reviewed this product yet."""
+            existing_reviewers = await session.execute(
+                select(Review.user_id).where(Review.item_id == item_id)
+            )
+            used_user_ids = {row[0] for row in existing_reviewers.fetchall() if row[0] is not None}
+            return [uid for uid in available_user_ids if uid not in used_user_ids]
+
+        # Helper function to assign user ID for a new review
+        def assign_user_for_review(item_id: str, available_users_for_product: list[str]) -> str:
+            """Assign a user ID for a new review, ensuring one review per user per product."""
+            if not available_users_for_product:
+                logger.warning(f"[Reviews] No available users for product {item_id}, reusing users")
+                # If no users available, randomly pick from all users (this shouldn't happen with 150 users)
+                return random.choice(available_user_ids)
+            return available_users_for_product.pop(0)  # Remove user from available list
         # Log LLM-related env
         logger.info(
             f"[Reviews] USE_LLM_FOR_REVIEWS={_use_llm_for_reviews()} "
@@ -652,6 +743,10 @@ async def populate_reviews(
         cache_records: list[dict] = []
         any_llm_used = False
         for item_id, name, description, category_name in products_rows:
+            # Get available users for this product (users who haven't reviewed it yet)
+            available_users_for_product = await get_available_users_for_product(item_id)
+            logger.debug(f"[Reviews] Product {item_id}: {len(available_users_for_product)} users available for reviews")
+            
             is_positive_only = item_id in positive_item_ids
             is_negative_only = item_id in negative_item_ids
             new_reviews_for_product: list[dict] = []
@@ -707,7 +802,7 @@ async def populate_reviews(
                                 to_add.append(
                                     Review(
                                         item_id=item_id,
-                                        user_id=None,
+                                        user_id=assign_user_for_review(item_id, available_users_for_product),
                                         rating=r["rating"],
                                         title=r["title"],
                                         content=r["comment"],
@@ -735,7 +830,7 @@ async def populate_reviews(
                         to_add.append(
                             Review(
                                 item_id=item_id,
-                                user_id=None,
+                                user_id=assign_user_for_review(item_id, available_users_for_product),
                                 rating=rating,
                                 title=title,
                                 content=content,
@@ -763,7 +858,7 @@ async def populate_reviews(
                         to_add.append(
                             Review(
                                 item_id=item_id,
-                                user_id=None,
+                                user_id=assign_user_for_review(item_id, available_users_for_product),
                                 rating=rating,
                                 title=title,
                                 content=content,
@@ -826,7 +921,7 @@ async def populate_reviews(
                                 to_add.append(
                                     Review(
                                         item_id=item_id,
-                                        user_id=None,
+                                        user_id=assign_user_for_review(item_id, available_users_for_product),
                                         rating=r["rating"],
                                         title=r["title"],
                                         content=r["comment"],
@@ -854,7 +949,7 @@ async def populate_reviews(
                         to_add.append(
                             Review(
                                 item_id=item_id,
-                                user_id=None,
+                                user_id=assign_user_for_review(item_id, available_users_for_product),
                                 rating=rating,
                                 title=title,
                                 content=content,
@@ -882,7 +977,7 @@ async def populate_reviews(
                         to_add.append(
                             Review(
                                 item_id=item_id,
-                                user_id=None,
+                                user_id=assign_user_for_review(item_id, available_users_for_product),
                                 rating=rating,
                                 title=title,
                                 content=content,
@@ -938,7 +1033,7 @@ async def populate_reviews(
                                 to_add.append(
                                     Review(
                                         item_id=item_id,
-                                        user_id=None,
+                                        user_id=assign_user_for_review(item_id, available_users_for_product),
                                         rating=r["rating"],
                                         title=r["title"],
                                         content=r["comment"],
@@ -963,7 +1058,7 @@ async def populate_reviews(
                         to_add.append(
                             Review(
                                 item_id=item_id,
-                                user_id=None,
+                                user_id=assign_user_for_review(item_id, available_users_for_product),
                                 rating=rating,
                                 title=title,
                                 content=content,
@@ -991,7 +1086,7 @@ async def populate_reviews(
                         to_add.append(
                             Review(
                                 item_id=item_id,
-                                user_id=None,
+                                user_id=assign_user_for_review(item_id, available_users_for_product),
                                 rating=rating,
                                 title=title,
                                 content=content,

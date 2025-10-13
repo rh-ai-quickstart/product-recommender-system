@@ -44,6 +44,7 @@ class ProductReview(BaseModel):
     id: int
     productId: str
     userId: Optional[str] = None
+    userName: Optional[str] = None  # User's email/name for display
     rating: int
     title: Optional[str] = ""
     comment: Optional[str] = ""
@@ -75,6 +76,7 @@ class LoginRequest(BaseModel):
 class SignUpRequest(BaseModel):
     email: str
     password: str
+    display_name: str = Field(min_length=2, max_length=50, description="Display name for public use (required)")
     age: int = Field(gt=0, description="Age must be positive")
     gender: str
 

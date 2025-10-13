@@ -30,6 +30,7 @@ export const SimpleSignupPage: React.FunctionComponent = () => {
     defaultValues: {
       email: '',
       password: '',
+      display_name: '',
       age: '',
       gender: '',
     },
@@ -40,6 +41,7 @@ export const SimpleSignupPage: React.FunctionComponent = () => {
         await signupMutation.mutateAsync({
           email: value.email,
           password: value.password,
+          display_name: value.display_name,
           age: parseInt(value.age),
           gender: value.gender,
         });
@@ -99,6 +101,55 @@ export const SimpleSignupPage: React.FunctionComponent = () => {
                 name={field.name}
                 value={field.state.value}
                 onChange={(_event, value) => field.handleChange(value)}
+                validated={
+                  !field.state.meta.isTouched
+                    ? 'default'
+                    : field.state.meta.errors.length > 0
+                      ? 'error'
+                      : 'success'
+                }
+              />
+              {field.state.meta.errors.length > 0 && (
+                <div
+                  style={{
+                    color: '#c9190b',
+                    fontSize: '14px',
+                    marginTop: '4px',
+                  }}
+                >
+                  {field.state.meta.errors[0]}
+                </div>
+              )}
+            </FormGroup>
+          )}
+        </form.Field>
+        <form.Field
+          name='display_name'
+          validators={{
+            onChange: ({ value }) => {
+              if (!value) {
+                return 'Display name is required';
+              }
+              if (value.length < 2) {
+                return 'Display name must be at least 2 characters';
+              }
+              if (value.length > 50) {
+                return 'Display name must be 50 characters or less';
+              }
+              return undefined;
+            },
+          }}
+        >
+          {field => (
+            <FormGroup label='Display Name' isRequired fieldId='simple-form-display-name-02'>
+              <TextInput
+                isRequired
+                type='text'
+                id='simple-form-display-name-02'
+                name={field.name}
+                value={field.state.value}
+                onChange={(_event, value) => field.handleChange(value)}
+                placeholder='Enter your display name (shown on reviews)'
                 validated={
                   !field.state.meta.isTouched
                     ? 'default'

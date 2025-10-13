@@ -38,6 +38,7 @@ export interface LoginRequest {
 export interface SignUpRequest {
   email: string;
   password: string;
+  display_name: string;
   age: number;
   gender: string;
 }
@@ -55,6 +56,7 @@ export interface ProductReview {
   id: number;
   productId: string;
   userId?: string;
+  userName?: string; // User's email/name for display
   rating: number;
   title?: string;
   comment?: string;

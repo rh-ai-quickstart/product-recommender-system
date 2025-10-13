@@ -94,6 +94,7 @@ async def signup(
     user = User(
         user_id=new_id,
         email=payload.email,
+        display_name=payload.display_name,  # Use provided display name
         age=payload.age,
         gender=payload.gender,
         signup_date=date.today(),

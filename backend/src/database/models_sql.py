@@ -13,6 +13,7 @@ class User(Base):
 
     user_id: Mapped[str] = mapped_column(String(27), primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String, unique=True, index=True)
+    display_name: Mapped[str] = mapped_column(String, nullable=False)  # Required field for public display
     password: Mapped[str] = mapped_column(
         String, nullable=True
     )  # raw (used only for mock data/gen)
@@ -23,6 +24,9 @@ class User(Base):
     preferences: Mapped[str] = mapped_column(String, nullable=True)
     user_preferences: Mapped[list["UserPreference"]] = relationship(
         "UserPreference", back_populates="user"
+    )
+    reviews: Mapped[list["Review"]] = relationship(
+        "Review", back_populates="user"
     )
 
 
@@ -109,10 +113,11 @@ class Review(Base):
     __tablename__ = "reviews"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     item_id: Mapped[str] = mapped_column(String, ForeignKey("products.item_id"), index=True)
-    user_id: Mapped[str] = mapped_column(String(27), nullable=True, index=True)
+    user_id: Mapped[str] = mapped_column(String(27), ForeignKey("users.user_id"), nullable=True, index=True)
     rating: Mapped[int] = mapped_column(Integer)  # 1..5
     title: Mapped[str] = mapped_column(Text, nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    # Products relationship
+    # Relationships
     product: Mapped["Product"] = relationship("Product", back_populates="reviews")
+    user: Mapped["User"] = relationship("User", back_populates="reviews", lazy="joined")
