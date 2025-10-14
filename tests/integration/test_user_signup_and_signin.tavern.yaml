@@ -9,6 +9,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}@test.com"
         password: "mypass"
+        display_name: "Test User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 25
         gender: "Male"
     response:
@@ -90,6 +91,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_minage@test.com"
         password: "password123"
+        display_name: "MinAge User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 1
         gender: "Male"
     response:
@@ -102,6 +104,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_maxage@test.com"
         password: "password123"
+        display_name: "MaxAge User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 120
         gender: "Female"
     response:
@@ -114,6 +117,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_verylongemailaddressfortesting@test.com"
         password: "password123"
+        display_name: "LongEmail User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 25
         gender: "Male"
     response:

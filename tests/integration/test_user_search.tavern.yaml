@@ -9,6 +9,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_search@test.com"
         password: "mypass"
+        display_name: "Search User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 25
         gender: "Male"
     response:

@@ -9,6 +9,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_reviews@test.com"
         password: "password123"
+        display_name: "Reviews User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 40
         gender: "Male"
     response:
@@ -129,6 +130,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_reviews_ne@test.com"
         password: "password123"
+        display_name: "Reviews NE User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 72
         gender: "Female"
     response:
@@ -182,6 +184,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_summarize_non_existent@test.com"
         password: "password123"
+        display_name: "Summarize NE User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 16
         gender: "Female"
     response:

@@ -109,6 +109,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_duplicate@test.com"
         password: "password123"
+        display_name: "Test User Duplicate {tavern.env_vars.TEST_TIMESTAMP}"
         age: 30
         gender: "Male"
     response:
@@ -123,6 +124,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_duplicate@test.com"
         password: "differentpassword"
+        display_name: "Different User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 25
         gender: "Female"
     response:
