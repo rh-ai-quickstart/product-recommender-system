@@ -1182,6 +1182,12 @@ async def setup_all():
         logger.info("✅ Database initialization completed successfully")
         await populate_categories()
         logger.info("✅ Categories populated successfully")
+        
+        # Convert string preferences to UserPreference records now that categories exist
+        from database.fetch_feast_users import convert_all_string_preferences_to_records
+        await convert_all_string_preferences_to_records()
+        logger.info("✅ User preferences converted successfully")
+        
         await populate_products()
         logger.info("✅ Products populated successfully")
         await populate_reviews()

@@ -251,5 +251,107 @@ async def _create_test_users(db, existing_user_ids: set):
         )
 
 
+async def _convert_string_preferences_to_records(db, created_users):
+    """
+    Convert comma separated string preferences from test_users.yaml to UserPreference table records.
+    
+    This function:
+    1. Parses comma-separated preference strings (e.g., "Electronics,Music,Movies")
+    2. Looks up category IDs by name in the Category table
+    3. Creates UserPreference records linking users to their categories
+    
+    Args:
+        db: Database session
+        created_users: List of user data dictionaries with preferences strings
+    """
+    from database.models_sql import Category, UserPreference
+    import uuid
+    
+    if not created_users:
+        return
+        
+    logger.info(f"🔄 Converting string preferences to UserPreference records for {len(created_users)} users")
+    
+    # Get all categories for lookup
+    result = await db.execute(select(Category.category_id, Category.name))
+    category_lookup = {row.name: row.category_id for row in result.all()}
+    
+    logger.info(f"📋 Found {len(category_lookup)} categories in database: {list(category_lookup.keys())}")
+    
+    user_preference_records = []
+    conversion_stats = {"success": 0, "failed": 0, "total_preferences": 0}
+    
+    for user_data in created_users:
+        preferences_str = user_data.get("preferences", "")
+        if not preferences_str or preferences_str.strip() == "":
+            continue
+            
+        # Parse comma-separated preferences
+        preference_names = [name.strip() for name in preferences_str.split(",") if name.strip()]
+        conversion_stats["total_preferences"] += len(preference_names)
+        
+        user_preferences = []
+        for pref_name in preference_names:
+            if pref_name in category_lookup:
+                user_preference = UserPreference(
+                    user_id=user_data["user_id"],
+                    category_id=category_lookup[pref_name]
+                )
+                user_preference_records.append(user_preference)
+                user_preferences.append(pref_name)
+                conversion_stats["success"] += 1
+            else:
+                logger.warning(f"⚠️  Category '{pref_name}' not found in database for user {user_data['email']}")
+                conversion_stats["failed"] += 1
+        
+        if user_preferences:
+            logger.info(f"✅ {user_data['email']}: {', '.join(user_preferences)}")
+    
+    # Batch insert all UserPreference records
+    if user_preference_records:
+        db.add_all(user_preference_records)
+        await db.commit()
+        
+        logger.info(f"✅ Created {len(user_preference_records)} UserPreference records")
+        logger.info(f"📊 Conversion stats: {conversion_stats['success']}/{conversion_stats['total_preferences']} successful, {conversion_stats['failed']} failed")
+    else:
+        logger.warning("⚠️  No valid preferences found to convert")
+
+
+async def convert_all_string_preferences_to_records():
+    """
+    Convert string preferences to UserPreference records for all users.
+    This is called after categories are populated to ensure category lookups work.
+    """
+    async for db in get_db():
+        # Get all users with non-empty string preferences
+        result = await db.execute(
+            select(User.user_id, User.email, User.preferences).where(
+                User.preferences.isnot(None),
+                User.preferences != ""
+            )
+        )
+        users_with_preferences = result.all()
+        
+        if not users_with_preferences:
+            logger.info("📋 No users found with string preferences to convert")
+            return
+        
+        logger.info(f"🔄 Converting string preferences for {len(users_with_preferences)} users")
+        
+        # Convert to the format expected by _convert_string_preferences_to_records
+        users_data = [
+            {
+                "user_id": row.user_id,
+                "email": row.email, 
+                "preferences": row.preferences
+            }
+            for row in users_with_preferences
+        ]
+        
+        # Use the existing conversion function
+        await _convert_string_preferences_to_records(db, users_data)
+
+
 if __name__ == "__main__":
     asyncio.run(seed_users())
