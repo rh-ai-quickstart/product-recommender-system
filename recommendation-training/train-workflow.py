@@ -488,82 +488,6 @@ def train_model(
     return modelMetadata(bucket_name, new_version, object_name, torch.__version__[0:5])
 
 
-@dsl.component(base_image="quay.io/rh-ai-quickstart/recommendation-oc-tools:latest")
-def fetch_cluster_credentials() -> NamedTuple(
-    "ocContext", [("author", str), ("user_token", str), ("host", str)]
-):
-    import os
-    import subprocess
-    from typing import NamedTuple
-    import logging
-
-    logger = logging.getLogger(__name__)
-
-    author_value = subprocess.run(
-        "oc whoami", shell=True, capture_output=True, text=True, check=True
-    ).stdout.strip()
-    user_token_value = subprocess.run(
-        "oc whoami -t", shell=True, capture_output=True, text=True, check=True
-    ).stdout.strip()
-    logger.info(f"author_value = {author_value}")
-    mr_namespace = os.getenv("MODEL_REGISTRY_NAMESPACE", "rhoai-model-registries")
-    mr_container = os.getenv("MODEL_REGISTRY_CONTAINER", "modelregistry-sample")
-
-    cmd = (
-        f"oc get svc {mr_container} -n {mr_namespace} -o json | "
-        f"jq '.metadata.annotations.\"routing.opendatahub.io/external-address-rest\"'"
-    )
-    host_output = subprocess.run(
-        cmd, shell=True, capture_output=True, text=True, check=True
-    ).stdout.strip()
-
-    if not host_output:
-        error_message = (
-            f"Model registry service '{mr_container}' is not available in namespace '{mr_namespace}'. "
-            f"Please ensure the service is properly deployed and accessible."
-        )
-        logger.info(error_message)
-        raise RuntimeError(error_message)
-
-    host_value = f"https://{host_output[1:-5]}"  # Remove quotes and :443
-
-    ocContext = NamedTuple("ocContext", [("author", str), ("user_token", str), ("host", str)])
-    return ocContext(author_value, user_token_value, host_value)
-
-
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=["model_registry"])
-def registry_model_to_model_registry(
-    author: str,
-    user_token: str,
-    host: str,
-    bucket_name: str,
-    new_version: str,
-    object_name: str,
-    torch_version: str,
-):
-    import os
-    from datetime import datetime
-
-    from model_registry import ModelRegistry, utils
-
-    registry = ModelRegistry(host, author=author, user_token=user_token)
-    # Use DNS with the namespace 'rhoai-model-registries'
-    model_endpoint = f"https://{host}:{os.environ.get('MINIO_PORT')}"
-
-    registry.register_model(
-        name="item-encoder",
-        uri=utils.s3_uri_from(
-            endpoint=model_endpoint,
-            bucket=bucket_name,
-            path=object_name,
-            region=os.environ.get("REGION", "us-east-1"),
-        ),
-        version=(f"{new_version}_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"),
-        model_format_name="pytorch",
-        model_format_version=torch_version,
-        storage_key="minio",
-    )
-
 
 @dsl.component(base_image=BASE_IMAGE, packages_to_install=["psycopg2-binary"])
 def load_data_from_feast(
@@ -727,21 +651,6 @@ def batch_recommendation():
     load_data_task.set_cpu_limit("3000m")
     load_data_task.set_memory_limit("3000Mi")
 
-    fetch_api_credentials_task = fetch_cluster_credentials()
-
-    fetch_api_credentials_task.set_caching_options(
-        False
-    )  # if set to true, the task will be cached and the credentials will not be updated.
-
-    fetch_api_credentials_task.set_env_variable(
-        name="MODEL_REGISTRY_NAMESPACE",
-        value=os.getenv("MODEL_REGISTRY_NAMESPACE", "rhoai-model-registries"),
-    )
-    fetch_api_credentials_task.set_env_variable(
-        name="MODEL_REGISTRY_CONTAINER",
-        value=os.getenv("MODEL_REGISTRY_CONTAINER", "modelregistry-sample"),
-    )
-
     train_model_task = train_model(
         item_df_input=load_data_task.outputs["item_df_output"],
         user_df_input=load_data_task.outputs["user_df_output"],
@@ -773,31 +682,6 @@ def batch_recommendation():
             "uri": "uri",
         },
     )
-
-    create_model_registry_task = registry_model_to_model_registry(
-        author=fetch_api_credentials_task.outputs["author"],
-        user_token=fetch_api_credentials_task.outputs["user_token"],
-        host=fetch_api_credentials_task.outputs["host"],
-        bucket_name=train_model_task.outputs["bucket_name"],
-        new_version=train_model_task.outputs["new_version"],
-        object_name=train_model_task.outputs["object_name"],
-        torch_version=train_model_task.outputs["torch_version"],
-    ).after(train_model_task, fetch_api_credentials_task)
-    create_model_registry_task.set_caching_options(False)
-    kubernetes.use_secret_as_env(
-        task=create_model_registry_task,
-        secret_name=os.getenv("MINIO_SECRET_NAME", "ds-pipeline-s3-dspa"),
-        secret_key_to_env={
-            "host": "MINIO_HOST",
-            "port": "MINIO_PORT",
-        },
-    )
-
-    # setting resource requests and limits - TODO: use from environment variables
-    create_model_registry_task.set_cpu_request("2000m")
-    create_model_registry_task.set_memory_request("2000Mi")
-    create_model_registry_task.set_cpu_limit("3000m")
-    create_model_registry_task.set_memory_limit("3000Mi")
 
     generate_candidates_task = generate_candidates(
         item_input_model=train_model_task.outputs["item_output_model"],

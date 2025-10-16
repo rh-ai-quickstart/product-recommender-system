@@ -40,3 +40,21 @@ export const summarizeProductReviews = async (
     'summarizeProductReviews'
   );
 };
+
+export interface CreateReviewRequest {
+  rating: number;
+  title?: string;
+  comment?: string;
+}
+
+export const createProductReview = async (
+  productId: string,
+  payload: CreateReviewRequest
+): Promise<ProductReview> => {
+  ServiceLogger.logServiceCall('createProductReview', { productId, payload });
+  return apiRequest<ProductReview>(
+    `/products/${encodeURIComponent(productId)}/reviews`,
+    'createProductReview',
+    { method: 'POST', body: payload }
+  );
+};

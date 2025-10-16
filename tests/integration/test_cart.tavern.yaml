@@ -9,6 +9,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_cart@test.com"
         password: "mypass"
+        display_name: "Cart User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 55
         gender: "Female"
     response:
@@ -187,6 +188,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_cart_edge@test.com"
         password: "mypass"
+        display_name: "Cart Edge User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 18
         gender: "Male"
     response:

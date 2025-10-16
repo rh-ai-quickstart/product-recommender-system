@@ -142,6 +142,7 @@ async def list_all_product_reviews(product_id: str, db: AsyncSession = Depends(g
             id=r.id,
             productId=r.item_id,
             userId=r.user_id,
+            userName=r.user.display_name if r.user and r.user.display_name else "Anonymous User",
             rating=r.rating,
             title=r.title or "",
             comment=r.content or "",

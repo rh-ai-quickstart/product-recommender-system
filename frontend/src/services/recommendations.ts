@@ -1,6 +1,5 @@
-import type { ProductData } from '../types';
+import type { ProductData, TopProductsParams } from '../types';
 import { apiRequest, ServiceLogger } from './api';
-import { DEFAULT_RECOMMENDATIONS_COUNT } from '../constants';
 
 /**
  * Fetch personalized recommendations for users with existing interaction history
@@ -16,74 +15,24 @@ export const fetchExistingUserRecommendations = async (
   );
 };
 
-/**
- * Create new user recommendations via ML model (POST endpoint)
- * This triggers the backend to generate initial recommendations for new users
- */
-export const createNewUserRecommendations = async (
-  numRecommendations: number = 10
+// Get top products in a category
+export const getTopProductsInCategory = async (
+  categoryId: string,
+  params?: TopProductsParams
 ): Promise<ProductData[]> => {
-  ServiceLogger.logServiceCall('createNewUserRecommendations', {
-    numRecommendations,
+  ServiceLogger.logServiceCall('getTopProductsInCategory', {
+    categoryId,
+    params,
   });
-
-  return apiRequest<ProductData[]>(
-    '/recommendations',
-    'createNewUserRecommendations',
-    {
-      method: 'POST',
-      body: { num_recommendations: numRecommendations },
-    }
-  );
-};
-
-/**
- * Fetch recommendations for new users without interaction history (cold start problem)
- * Uses the POST endpoint which generates ML-powered recommendations based on user preferences
- */
-export const fetchNewUserRecommendations = async (
-  userId: string,
-  numRecommendations: number = DEFAULT_RECOMMENDATIONS_COUNT
-): Promise<ProductData[]> => {
-  ServiceLogger.logServiceCall('fetchNewUserRecommendations', {
-    userId,
-    numRecommendations,
-  });
-
-  try {
-    // Use the POST endpoint which generates new user recommendations via ML model
-    return await apiRequest<ProductData[]>(
-      '/recommendations',
-      'fetchNewUserRecommendations',
-      {
-        method: 'POST',
-        body: { num_recommendations: numRecommendations },
-      }
+  const queryParams = new URLSearchParams();
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.include_subcategories !== undefined) {
+    queryParams.append(
+      'include_subcategories',
+      params.include_subcategories.toString()
     );
-  } catch (error) {
-    // If backend fails, return mock data as fallback
-    console.warn('Recommendations failed, using fallback data:', error);
-    return [
-      {
-        item_id: '1',
-        product_name: 'Sample Product 1',
-        actual_price: 29.99,
-        rating: 4.5,
-        category: 'Sample Category',
-        about_product:
-          'This is a sample product while we set up your personalized recommendations.',
-        img_link: 'https://via.placeholder.com/300x300?text=Product+1',
-      },
-      {
-        item_id: '2',
-        product_name: 'Sample Product 2',
-        actual_price: 49.99,
-        rating: 4.0,
-        category: 'Sample Category',
-        about_product: 'Another sample product for testing purposes.',
-        img_link:
-          'https://repo-avatars.githubusercontent.com/300x300?text=Product+2',
-      },
-    ];
   }
+
+  const url = `/users/categories/${categoryId}/top-products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  return apiRequest<ProductData[]>(url, 'getTopProductsInCategory');
 };

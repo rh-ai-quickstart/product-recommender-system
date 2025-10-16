@@ -34,6 +34,7 @@ class User(BaseModel):
     gender: str
     signup_date: date
     preferences: str
+    user_preferences: Optional[List["CategoryTree"]] = None
     views: Optional[List["Product"]] = None  # quotes avoid circular import issues
 
     model_config = ConfigDict(from_attributes=True)
@@ -43,6 +44,7 @@ class ProductReview(BaseModel):
     id: int
     productId: str
     userId: Optional[str] = None
+    userName: Optional[str] = None  # User's email/name for display
     rating: int
     title: Optional[str] = ""
     comment: Optional[str] = ""
@@ -74,12 +76,15 @@ class LoginRequest(BaseModel):
 class SignUpRequest(BaseModel):
     email: str
     password: str
+    display_name: str = Field(
+        min_length=2, max_length=50, description="Display name for public use (required)"
+    )
     age: int = Field(gt=0, description="Age must be positive")
     gender: str
 
 
 class PreferencesRequest(BaseModel):
-    preferences: str
+    category_ids: List[str]
 
 
 class AuthResponse(BaseModel):
@@ -107,3 +112,40 @@ class Order(BaseModel):
     total_amount: float
     order_date: datetime
     status: str
+
+
+class CategoryTree(BaseModel):
+    category_id: str
+    name: str
+    subcategories: List["CategoryTree"] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Onboarding models
+class OnboardingProductsResponse(BaseModel):
+    products: List[Product]
+    round_number: int
+    total_interactions: int
+    is_complete: bool
+    max_rounds: int = 3
+    target_interactions: int = 10
+
+
+class OnboardingSelectionRequest(BaseModel):
+    selected_product_ids: List[str]
+    round_number: int
+
+
+class OnboardingSelectionResponse(BaseModel):
+    interactions_logged: int
+    total_interactions: int
+    round_number: int
+    is_complete: bool
+    next_round_available: bool
+    max_rounds: int = 3
+    target_interactions: int = 10
+
+
+# This is needed for the forward reference in CategoryTree
+CategoryTree.model_rebuild()

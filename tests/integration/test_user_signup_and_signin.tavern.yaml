@@ -9,6 +9,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}@test.com"
         password: "mypass"
+        display_name: "Test User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 25
         gender: "Male"
     response:
@@ -23,6 +24,7 @@ stages:
           gender: "Male"
           signup_date: !anystr
           preferences: ""
+          user_preferences: []
           views: []
         token: !anystr
       save:
@@ -49,11 +51,26 @@ stages:
           gender: "Male"
           signup_date: "{signup_date}"
           preferences: ""
+          user_preferences: []
           views: []
         token: !anystr
       save:
         json:
           token: "token"
+
+  - name: Get categories to find valid category ID
+    request:
+      url: "{tavern.env_vars.TEST_FRONTEND_URL}/users/categories"
+      method: GET
+      headers:
+        Authorization: "Bearer {token}"
+        Content-Type: "application/json"
+    response:
+      status_code: 200
+      save:
+        json:
+          first_category_id: "[0].category_id"
+          second_category_id: "[1].category_id"
 
   - name: Test Set Preferences
     request:
@@ -63,7 +80,7 @@ stages:
         Authorization: "Bearer {token}"
         Content-Type: "application/json"
       json:
-        preferences: "Home&Kitchen,HomeTheater,TV&Video"
+        category_ids: ["{first_category_id}", "{second_category_id}"]
     response:
       status_code: 200
       headers:
@@ -75,7 +92,14 @@ stages:
           age: 25
           gender: "Male"
           signup_date: "{signup_date}"
-          preferences: "Home&Kitchen,HomeTheater,TV&Video"
+          preferences: !anystr
+          user_preferences:
+            - category_id: "{first_category_id}"
+              name: !anystr
+              subcategories: []
+            - category_id: "{second_category_id}"
+              name: !anystr
+              subcategories: []
           views: []
         token: !anystr
 
@@ -90,6 +114,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_minage@test.com"
         password: "password123"
+        display_name: "MinAge User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 1
         gender: "Male"
     response:
@@ -102,6 +127,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_maxage@test.com"
         password: "password123"
+        display_name: "MaxAge User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 120
         gender: "Female"
     response:
@@ -114,6 +140,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_verylongemailaddressfortesting@test.com"
         password: "password123"
+        display_name: "LongEmail User {tavern.env_vars.TEST_TIMESTAMP}"
         age: 25
         gender: "Male"
     response:

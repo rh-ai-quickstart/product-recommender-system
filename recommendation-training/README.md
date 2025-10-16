@@ -1,56 +1,38 @@
 # Recommendation Training Container
 
-This directory contains the container images for the recommendation training workflow using a two-image approach.
+This directory contains the container image for the recommendation training workflow.
 
-## Two-Image Architecture
+## Container Architecture
 
-### 1. Training Pipeline Image (`recommendation-training`)
-- **Purpose**: Main ML training workflow
+### Training Pipeline Image (`recommendation-training`)
+- **Purpose**: ML training workflow and data processing
 - **Base Image**: `registry.access.redhat.com/ubi9/python-311`
 - **Contents**: Python dependencies, training scripts, ML libraries
-- **Usage**: Training, data processing, model training
-
-### 2. OC Tools Image (`recommendation-oc-tools`)
-- **Purpose**: Cluster operations and model registry
-- **Base Image**: `python:3.11-slim`
-- **Contents**: OpenShift CLI, model registry tools
-- **Usage**: `fetch_cluster_credentials()`, model registration
+- **Usage**: Training, data processing, model training, candidate generation
 
 ## Build Process
 
-### Local Build - Training Image
+### Local Build
 
 ```bash
 cd recommendation-training
 podman build -t quay.io/rh-ai-quickstart/recommendation-training:latest .
 ```
 
-### Local Build - OC Tools Image
-
-```bash
-cd recommendation-training/oc-tools
-podman build -t quay.io/rh-ai-quickstart/recommendation-oc-tools:latest .
-```
-
 ### Push to Registry
 
 ```bash
-# Push training image
 podman push quay.io/rh-ai-quickstart/recommendation-training:latest
-
-# Push oc-tools image
-podman push quay.io/rh-ai-quickstart/recommendation-oc-tools:latest
 ```
 
 ### Automated Build
 
-The containers are automatically built and pushed via GitHub Actions when:
+The container is automatically built and pushed via GitHub Actions when:
 - Changes are pushed to the `main` or `master` branch
-- The workflows are manually triggered
+- The workflow is manually triggered
 
-**Workflows:**
+**Workflow:**
 - `.github/workflows/build-and-push.yaml` - Training pipeline image
-- `.github/workflows/build-and-push-oc-tools.yaml` - OC tools image
 
 ## Container Contents
 
@@ -60,28 +42,26 @@ The containers are automatically built and pushed via GitHub Actions when:
 - **Working Directory**: `/app`
 - **Dependencies**:
   - Python packages via `uv`
-  - ML training libraries
-  - Training scripts
-
-### OC Tools Image (`recommendation-oc-tools`)
-- **Base Image**: `python:3.11-slim`
-- **Working Directory**: `/app`
-- **Dependencies**:
-  - OpenShift CLI (`oc`)
-  - `curl`, `tar`, `jq` utilities
-  - `model_registry==0.2.21` Python package
+  - ML training libraries (PyTorch, transformers, etc.)
+  - Training scripts and utilities
+  - Feast integration for feature store operations
 
 ## Key Files
 
-### Training Image
 - `Containerfile`: Container definition
 - `train-workflow.py`: Kubeflow pipeline definition
 - `entrypoint.sh`: Container entry point
 - `pyproject.toml`: Python dependencies
 
-### OC Tools Image
-- `oc-tools/Containerfile`: Dedicated container for cluster operations
-- Focused on OC CLI and model registry tools
+## Pipeline Workflow
+
+The training pipeline performs these key steps:
+
+1. **Load Data from Feast**: Retrieves training data from the feature store
+2. **Train Model**: Creates and trains the two-tower recommendation model
+3. **Save Models**: Stores trained models in MinIO object storage
+4. **Generate Candidates**: Creates embeddings and pre-calculated recommendations
+5. **Update Feature Store**: Pushes new features and recommendations to Feast
 
 ## Usage
 
@@ -94,12 +74,12 @@ containers:
   args: ['-c', './entrypoint.sh']
 ```
 
-### Cluster Operations
-```python
-@dsl.component(base_image="quay.io/rh-ai-quickstart/recommendation-oc-tools:latest")
-def fetch_cluster_credentials():
-    # OC CLI operations
-```
+### Model Management
+
+The system uses a simplified model management approach:
+- **Storage**: Models saved directly to MinIO object storage
+- **Versioning**: Tracked via database `model_version` table
+- **Loading**: Direct access from MinIO for better performance
 
 ## GitHub Actions
 
@@ -109,10 +89,10 @@ The automated build process requires:
 
 These secrets must be configured in the GitHub repository settings.
 
-## Benefits of Two-Image Approach
+## Benefits of Current Architecture
 
-1. **Separation of Concerns**: Training vs. cluster operations
-2. **Smaller Images**: Each image focused on specific purpose
-3. **Better Security**: Minimal tools in each image
-4. **Easier Maintenance**: Independent updates for each image
-5. **Proven Pattern**: Same approach as working `rec-sys-workflow`
+1. **Simplified Design**: Single-purpose container for training operations
+2. **Direct Model Access**: No intermediate model registry layers
+3. **Better Performance**: Faster model loading and deployment
+4. **Easier Maintenance**: Fewer moving parts and dependencies
+5. **Resource Efficient**: Reduced infrastructure requirements

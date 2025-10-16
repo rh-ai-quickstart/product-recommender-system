@@ -25,6 +25,7 @@ export interface User {
   gender: string;
   signup_date: string; // Changed from date to string to match backend
   preferences: string;
+  user_preferences?: CategoryTree[]; // Added structured preferences
   views?: string[]; // Added optional views array
 }
 
@@ -37,6 +38,7 @@ export interface LoginRequest {
 export interface SignUpRequest {
   email: string;
   password: string;
+  display_name: string;
   age: number;
   gender: string;
 }
@@ -54,6 +56,7 @@ export interface ProductReview {
   id: number;
   productId: string;
   userId?: string;
+  userName?: string; // User's email/name for display
   rating: number;
   title?: string;
   comment?: string;
@@ -70,3 +73,47 @@ export interface ReviewSummarization {
   productId: string;
   summary: string;
 }
+
+export interface PreferencesRequest {
+  category_ids: string[];
+}
+
+// Category-related interfaces
+export interface CategoryTree {
+  category_id: string;
+  name: string;
+  subcategories: CategoryTree[]; // Recursive structure for nested categories
+}
+
+// Query parameters for top products endpoint
+export interface TopProductsParams {
+  limit?: number; // 1-100, default 10
+  include_subcategories?: boolean; // default true
+}
+
+// Onboarding-specific types
+export interface OnboardingProductsResponse {
+  products: ProductData[];
+  round_number: number;
+  total_interactions: number;
+  is_complete: boolean;
+  max_rounds: number;
+  target_interactions: number;
+}
+
+export interface OnboardingSelectionRequest {
+  selected_product_ids: string[];
+  round_number: number;
+}
+
+export interface OnboardingSelectionResponse {
+  interactions_logged: number;
+  total_interactions: number;
+  round_number: number;
+  is_complete: boolean;
+  next_round_available: boolean;
+  max_rounds: number;
+  target_interactions: number;
+}
+
+export type OnboardingStep = 'categories' | 'products' | 'complete';

@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getProductReviewSummary,
   listProductReviews,
   summarizeProductReviews,
+  createProductReview,
+  type CreateReviewRequest,
 } from '../services/reviews';
 
 export const useProductReviews = (
@@ -36,5 +38,18 @@ export const useProductReviewSummarization = (
     queryFn: () => summarizeProductReviews(productId),
     enabled: !!productId && enabled,
     staleTime: 10 * 60 * 1000,
+  });
+};
+
+export const useCreateProductReview = (productId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateReviewRequest) =>
+      createProductReview(productId, payload),
+    onSuccess: () => {
+      // Refresh reviews and summary after posting
+      qc.invalidateQueries({ queryKey: ['reviews', productId] });
+      qc.invalidateQueries({ queryKey: ['reviews', productId, 'summary'] });
+    },
   });
 };

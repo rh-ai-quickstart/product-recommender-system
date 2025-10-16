@@ -18,7 +18,9 @@ from recommendation_core.service.clip_encoder import ClipEncoder
 from recommendation_core.service.dataset_provider import LocalDatasetProvider
 from recommendation_core.service.search_by_image import SearchByImageService
 from recommendation_core.service.search_by_text import SearchService
-from sqlalchemy import create_engine, text as sql_text
+from sqlalchemy import create_engine
+from sqlalchemy import text as sql_text
+
 from models import Product, User
 
 logger = logging.getLogger(__name__)
@@ -197,8 +199,6 @@ class FeastService:
         prefix_ids: List[str] = []
         contains_ids: List[str] = []
         try:
-            from sqlalchemy import create_engine, text as sql_text
-
             database_url = os.getenv("DATABASE_URL")
             if not database_url:
                 raise RuntimeError("DATABASE_URL not set")
@@ -248,7 +248,8 @@ class FeastService:
                 )
 
             logger.info(
-                f"name-boost exact:{len(exact_ids)} prefix:{len(prefix_ids)} contains:{len(contains_ids)}"
+                f"name-boost exact:{len(exact_ids)} prefix:{len(prefix_ids)}"
+                f"contains:{len(contains_ids)}"
             )
         except Exception as e:
             logger.info(f"name boosting skipped: {e}")
@@ -269,11 +270,12 @@ class FeastService:
             return self._item_ids_to_product_list(final_ids)
 
         # Otherwise fetch semantic candidates to fill remaining slots
-        remaining = k - len(merged)
         semantic_k = max(k, 50)
         try:
             semantic_df = search_service.search_by_text(text, semantic_k)
-            semantic_ids = semantic_df["item_id"].astype(str).tolist() if not semantic_df.empty else []
+            semantic_ids = (
+                semantic_df["item_id"].astype(str).tolist() if not semantic_df.empty else []
+            )
         except Exception as e:
             logger.error(f"Semantic search failed: {e}")
             semantic_ids = []

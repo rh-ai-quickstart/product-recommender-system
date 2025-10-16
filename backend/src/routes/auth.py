@@ -9,8 +9,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.db import get_db
-from database.models_sql import User
-from models import AuthResponse, LoginRequest, SignUpRequest
+from database.models_sql import Category, User, UserPreference
+from models import AuthResponse, CategoryTree, LoginRequest, SignUpRequest
 from models import User as UserResponse
 from services.security import (
     ALGORITHM,
@@ -22,6 +22,21 @@ from services.security import (
 
 # OAuth2 scheme for Bearer token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+async def load_user_preferences(db: AsyncSession, user_id: str) -> list[CategoryTree]:
+    """Helper function to load user preferences from UserPreference table"""
+    user_prefs_query = await db.execute(
+        select(Category.category_id, Category.name, Category.parent_id)
+        .join(UserPreference, UserPreference.category_id == Category.category_id)
+        .where(UserPreference.user_id == user_id)
+    )
+    user_categories = user_prefs_query.all()
+
+    return [
+        CategoryTree(category_id=str(cat.category_id), name=cat.name, subcategories=[])
+        for cat in user_categories
+    ]
 
 
 # Utility: generate a 27-digit user ID
@@ -56,6 +71,17 @@ async def get_current_user(
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+@router.get("/check-display-name/{display_name}")
+async def check_display_name_availability(
+    display_name: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Check if a display name is available for registration"""
+    result = await db.execute(select(User).where(User.display_name == display_name))
+    is_available = result.scalar_one_or_none() is None
+    return {"available": is_available}
+
+
 @router.post(
     "/signup",
     response_model=AuthResponse,
@@ -65,39 +91,65 @@ async def signup(
     payload: SignUpRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    # Prevent duplicates
-    result = await db.execute(select(User).where(User.email == payload.email))
-    if result.scalar_one_or_none():
-        raise HTTPException(400, "Email already registered")
+    try:
+        # Prevent duplicates
+        result = await db.execute(select(User).where(User.email == payload.email))
+        if result.scalar_one_or_none():
+            raise HTTPException(400, "Email already registered")
 
-    # Create user with generated ID
-    new_id = generate_user_id()
-    user = User(
-        user_id=new_id,
-        email=payload.email,
-        age=payload.age,
-        gender=payload.gender,
-        signup_date=date.today(),
-        preferences="",
-        hashed_password=hash_password(payload.password),
-    )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
+        # Check for duplicate display names
+        display_name_result = await db.execute(
+            select(User).where(User.display_name == payload.display_name)
+        )
+        if display_name_result.scalar_one_or_none():
+            raise HTTPException(400, "Display name already taken")
 
-    # Issue JWT
-    token = create_access_token(subject=str(user.user_id))
+        # Create user with generated ID
+        new_id = generate_user_id()
+        user = User(
+            user_id=new_id,
+            email=payload.email,
+            display_name=payload.display_name,  # Use provided display name
+            age=payload.age,
+            gender=payload.gender,
+            signup_date=date.today(),
+            preferences="",
+            hashed_password=hash_password(payload.password),
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
 
-    user_response = UserResponse(
-        user_id=user.user_id,
-        email=user.email,
-        age=user.age,
-        gender=user.gender,
-        signup_date=user.signup_date,
-        preferences=user.preferences,
-        views=[],
-    )
-    return AuthResponse(user=user_response, token=token)
+        # Issue JWT
+        token = create_access_token(subject=str(user.user_id))
+
+        # Load user preferences from UserPreference table (new users will have empty preferences)
+        user_preferences = await load_user_preferences(db, user.user_id)
+
+        user_response = UserResponse(
+            user_id=user.user_id,
+            email=user.email,
+            age=user.age,
+            gender=user.gender,
+            signup_date=user.signup_date,
+            preferences=user.preferences,
+            user_preferences=user_preferences,
+            views=[],
+        )
+        return AuthResponse(user=user_response, token=token)
+    except HTTPException:
+        # Re-raise HTTP exceptions (our explicit validation errors)
+        raise
+    except Exception as e:
+        # Handle database constraint violations as fallback
+        error_msg = str(e).lower()
+        if "unique constraint" in error_msg or "duplicate" in error_msg:
+            if "email" in error_msg:
+                raise HTTPException(400, "Email already registered")
+            elif "display_name" in error_msg:
+                raise HTTPException(400, "Display name already taken")
+        # Re-raise other unexpected errors
+        raise HTTPException(500, "An error occurred during signup")
 
 
 @router.post(
@@ -121,6 +173,9 @@ async def login(
     # Issue JWT
     token = create_access_token(subject=str(user.user_id))
 
+    # Load user preferences from UserPreference table
+    user_preferences = await load_user_preferences(db, user.user_id)
+
     user_response = UserResponse(
         user_id=user.user_id,
         email=user.email,
@@ -128,6 +183,7 @@ async def login(
         gender=user.gender,
         signup_date=user.signup_date,
         preferences=user.preferences,
+        user_preferences=user_preferences,
         views=[],
     )
     return AuthResponse(user=user_response, token=token)
@@ -140,8 +196,12 @@ async def login(
 )
 async def get_current_user_info(
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Get current authenticated user information"""
+    # Load user preferences from UserPreference table
+    user_preferences = await load_user_preferences(db, current_user.user_id)
+
     return UserResponse(
         user_id=current_user.user_id,
         email=current_user.email,
@@ -149,5 +209,6 @@ async def get_current_user_info(
         gender=current_user.gender,
         signup_date=current_user.signup_date,
         preferences=current_user.preferences,
+        user_preferences=user_preferences,
         views=[],
     )

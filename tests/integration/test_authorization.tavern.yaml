@@ -122,6 +122,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_user1@test.com"
         password: "password123"
+        display_name: "Test User 1 {tavern.env_vars.TEST_TIMESTAMP}"
         age: 25
         gender: "Male"
     response:
@@ -150,6 +151,7 @@ stages:
       json:
         email: "test{tavern.env_vars.TEST_TIMESTAMP}_user2@test.com"
         password: "password456"
+        display_name: "Test User 2 {tavern.env_vars.TEST_TIMESTAMP}"
         age: 30
         gender: "Female"
     response:

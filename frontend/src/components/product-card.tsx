@@ -29,7 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
   }).format(product.actual_price);
   const rating = new Intl.NumberFormat('en-US', {
     minimumIntegerDigits: 1,
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 1,
   }).format(product.rating ?? 0);
 
   return (
