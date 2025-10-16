@@ -95,6 +95,11 @@ backend:
         secretKeyRef:
           name: llama-api
           key: LLM_API_KEY
+    - name: SUMMARY_LLM_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: llama-api
+          key: SUMMARY_LLM_API_KEY
   # - name: EXAMPLE_VAR
   #   value: "example-value"
 
@@ -111,12 +116,15 @@ backend:
   pullPolicy: Always
 
 # Special configuration for the LLM API key
+# Add the key when calling make install
+# PLEASE MAKE SURE THAT YOU DON'T SHARE THE KEY OR PUSH IT TO THE REPOSITORY.
 llm:
   secret:
     create: true
     name: llama-api
     data:
       LLM_API_KEY: ""
+      SUMMARY_LLM_API_KEY: ""
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -220,7 +228,7 @@ llmModel:
   ollamaModel: <this is used to set the ollama model used for the reviews summarization>
   # provide this when calling make (e.g., make install OLLAMA_MODEL=meta-llama/Llama-3.1-8B-Instruct)
   modelEndpoint: <this is the url of the model that used to summarize the reviews>
-  # provide this when calling make (e.g., make install MODEL_ENDPOINT=http://model-url.com/v1)
+  # provide this when calling make (e.g., make install MODEL_ENDPOINT=https://model-url.com/v1)
 
 minio:
   env:

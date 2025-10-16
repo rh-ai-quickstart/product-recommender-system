@@ -262,7 +262,7 @@ async def _generate_reviews_with_llm(
     min_words = int(os.getenv("LLM_COMMENT_MIN_WORDS", "60"))
     max_words = int(os.getenv("LLM_COMMENT_MAX_WORDS", "120"))
 
-    if not api_base or not api_key:
+    if not (api_base and api_key):
         raise RuntimeError(
             "LLM_API_BASE and LLM_API_KEY must be set when USE_LLM_FOR_REVIEWS is enabled"
         )

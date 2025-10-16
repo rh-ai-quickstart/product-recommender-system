@@ -24,7 +24,7 @@ MINIMUM_PASSWORD_LENGTH = 8
 REQUIRED_PARAMS = minio.userId minio.password
 # Model configuration defaults
 OLLAMA_MODEL ?= meta-llama/Llama-3.1-8B-Instruct
-MODEL_ENDPOINT ?= http://llama-3-1-8b-instruct-predictor-kickstart-llms.apps.ai-dev02.kni.syseng.devcluster.openshift.com/v1
+MODEL_ENDPOINT ?= https://llama-3-1-8b-instruct-predictor-kickstart-llms.apps.ai-dev02.kni.syseng.devcluster.openshift.com/v1
 
 # Helm argument helpers
 helm_pgvector_args = \
