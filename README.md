@@ -1,6 +1,6 @@
-# Boost online sales with AI-powered recommendations
+# Transform product discovery with AI recommendations
 
-See how AI can transform product discovery with personalized recommendations, smart review summaries, and intelligent search for any online store.
+Integrate AI-driven product recommendations, automated review summarization, and enhanced search capabilities into an e-commerce storefront.
 
 ## Detailed description
 
