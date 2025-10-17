@@ -481,47 +481,67 @@ async def _get_products_from_user_categories(
 )
 async def get_onboarding_products(
     round_number: int = Query(default=1, ge=1, le=3),
+    excluded_product_ids: str = Query(default="", description="Comma-separated list of product IDs to exclude"),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     """
     Get curated products for onboarding based on user's category preferences.
     Returns exactly 12 products: 10 from user's categories + 2 random products.
+    Excludes any products specified in excluded_product_ids to prevent repeats across rounds.
     """
     try:
+        # Parse excluded product IDs
+        excluded_ids = set()
+        if excluded_product_ids.strip():
+            excluded_ids = set(excluded_product_ids.split(","))
+
         # Check current interaction count
         total_interactions = await _get_user_interaction_count(db, user.user_id)
 
         # Check if onboarding is already complete
         is_complete = total_interactions >= 10
 
-        # Get products from user's categories (exactly 10)
-        category_products = await _get_products_from_user_categories(db, user, limit=10)
+        # Get products from user's categories (fetch more to account for exclusions)
+        initial_category_limit = 20 if excluded_ids else 10
+        category_products = await _get_products_from_user_categories(db, user, limit=initial_category_limit)
 
-        # Get random products from FeastService (exactly 2)
+        # Filter out excluded products from category products
+        category_products = [p for p in category_products if p.item_id not in excluded_ids]
+
+        # Get random products from FeastService (fetch more to account for exclusions)
         feast_service = FeastService()
-        random_products = feast_service._load_random_items(k=2)
+        initial_random_count = 10 if excluded_ids else 2
+        random_products = feast_service._load_random_items(k=initial_random_count)
 
-        # Combine products - should be exactly 12 total
-        all_products = category_products + random_products
+        # Filter out excluded products from random products
+        random_products = [p for p in random_products if p.item_id not in excluded_ids]
 
-        # Remove duplicates based on item_id while maintaining count
+        # Prioritize category products (up to 10), then fill with random products
         seen_ids = set()
         unique_products = []
-        for product in all_products:
-            if product.item_id not in seen_ids:
+        category_products_added = 0
+
+        # Add category products first (up to 10)
+        for product in category_products:
+            if product.item_id not in seen_ids and category_products_added < 10:
+                unique_products.append(product)
+                seen_ids.add(product.item_id)
+                category_products_added += 1
+
+        # Add random products to fill remaining slots (up to 12 total)
+        for product in random_products:
+            if product.item_id not in seen_ids and len(unique_products) < 12:
                 unique_products.append(product)
                 seen_ids.add(product.item_id)
 
-        # If we have fewer than 12 due to duplicates, get more random products
+        # If we still need more products due to exclusions, get additional random products
         if len(unique_products) < 12:
             additional_needed = 12 - len(unique_products)
-            additional_random = feast_service._load_random_items(
-                k=additional_needed * 2
-            )  # Get extra to account for potential duplicates
+            additional_random = feast_service._load_random_items(k=additional_needed * 3)  # Get extra to account for exclusions and duplicates
 
             for product in additional_random:
-                if product.item_id not in seen_ids and len(unique_products) < 12:
+                if product.item_id not in seen_ids and product.item_id not in excluded_ids and len(unique_products) < 12:
                     unique_products.append(product)
                     seen_ids.add(product.item_id)
 

@@ -338,7 +338,7 @@ export const SimpleSignupPage: React.FunctionComponent = () => {
                 onChange={() => field.handleChange('Female')}
               />
               <Radio
-                label='Other'
+                label='Prefer not to say'
                 name={field.name}
                 id='radio-other'
                 value='Other'

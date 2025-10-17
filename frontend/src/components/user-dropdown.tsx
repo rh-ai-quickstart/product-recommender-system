@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Avatar,
   Dropdown,
   DropdownItem,
   DropdownList,
@@ -46,7 +45,7 @@ export const UserDropdown: React.FunctionComponent = () => {
       }}
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
-          icon={<Avatar size='sm' src='/vite.svg' alt='User avatar' />}
+          icon={<UserIcon />}
           ref={toggleRef}
           onClick={toggle}
           aria-label='User menu'
@@ -60,7 +59,6 @@ export const UserDropdown: React.FunctionComponent = () => {
           key='account'
           component={props => (
             <Link to='/account' {...props} onClick={onSelect}>
-              <UserIcon style={{ marginRight: '8px' }} />
               My Account
             </Link>
           )}

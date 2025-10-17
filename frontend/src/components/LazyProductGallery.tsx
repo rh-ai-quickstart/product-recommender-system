@@ -130,6 +130,9 @@ export const LazyProductGallery: React.FC<LazyProductGalleryProps> = ({
             color: 'white',
             fontSize: '12px',
             fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           Top

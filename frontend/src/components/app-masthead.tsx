@@ -1,5 +1,7 @@
 import {
+  MastheadBrand,
   MastheadContent,
+  MastheadMain,
   Masthead as PFMasthead,
   Title,
   Toolbar,
@@ -20,13 +22,6 @@ export function AppMasthead() {
   const toolbar = (
     <Toolbar isFullHeight>
       <ToolbarContent>
-        <ToolbarGroup>
-          <ToolbarItem>
-            <Link to='/' style={{ textDecoration: 'none', color: 'inherit' }}>
-              <Title headingLevel='h4'>Product Recommendations</Title>
-            </Link>
-          </ToolbarItem>
-        </ToolbarGroup>
         {!isPreferencesPage && (
           <ToolbarGroup
             className='pf-v6-u-w-100 pf-v6-u-w-75-on-md pf-v6-u-px-xl-on-md'
@@ -45,6 +40,11 @@ export function AppMasthead() {
           <ToolbarItem>
             <CartIcon />
           </ToolbarItem>
+          </ToolbarGroup>
+          <ToolbarGroup
+          variant='action-group'
+          className='pf-v6-u-display-none pf-v6-u-display-block-on-md'
+        >
           <ToolbarItem>
             <UserDropdown />
           </ToolbarItem>
@@ -55,6 +55,13 @@ export function AppMasthead() {
 
   return (
     <PFMasthead>
+      <MastheadMain>
+        <MastheadBrand data-codemods='true'>
+          <Link to='/' style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Title headingLevel='h2'>Product Recommendations</Title>
+          </Link>
+        </MastheadBrand>
+      </MastheadMain>
       <MastheadContent>{toolbar}</MastheadContent>
     </PFMasthead>
   );

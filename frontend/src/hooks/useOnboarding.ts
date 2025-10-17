@@ -15,15 +15,17 @@ import type {
  *
  * @param {number} roundNumber - The round number (1-3) to fetch products for
  * @param {boolean} enabled - Whether the query should be enabled (default: true)
+ * @param {string[]} excludedProductIds - Array of product IDs to exclude from results (optional)
  * @returns {UseQueryResult<OnboardingProductsResponse>} Query result with products data
  */
 export const useOnboardingProducts = (
   roundNumber: number,
-  enabled: boolean = true
+  enabled: boolean = true,
+  excludedProductIds: string[] = []
 ) => {
   return useQuery<OnboardingProductsResponse>({
-    queryKey: ['onboardingProducts', roundNumber],
-    queryFn: () => getOnboardingProducts(roundNumber),
+    queryKey: ['onboardingProducts', roundNumber, excludedProductIds],
+    queryFn: () => getOnboardingProducts(roundNumber, excludedProductIds),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: enabled && roundNumber > 0 && roundNumber <= 3, // Only fetch for valid rounds when enabled
   });

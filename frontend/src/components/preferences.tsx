@@ -213,12 +213,28 @@ export function PreferencePage() {
     return total;
   };
 
+  // Calculate selected product IDs from COMPLETED rounds only (for exclusion)
+  // This prevents the current round from refreshing when user selects products
+  const getCompletedRoundSelections = () => {
+    const completedSelected: string[] = [];
+    roundSelections.forEach((selections, roundNumber) => {
+      // Only include selections from rounds that are completed (less than current round)
+      if (roundNumber < currentRound) {
+        selections.forEach(productId => {
+          completedSelected.push(productId);
+        });
+      }
+    });
+    return completedSelected;
+  };
+
   // Hooks
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const onboardingProductsQuery = useOnboardingProducts(
     currentRound,
-    onboardingStep === 'products'
+    onboardingStep === 'products',
+    getCompletedRoundSelections() // Pass only completed round selections to exclude them
   );
   const submitSelectionsMutation = useSubmitOnboardingSelections();
   // Note: Removed onboardingStatusQuery - we use only frontend state now
@@ -396,7 +412,7 @@ export function PreferencePage() {
     try {
       setErrorMessage('');
 
-      // Collect all selections from all rounds
+      // Collect all selections from all rounds (including current round)
       const allSelectedProducts: string[] = [];
       roundSelections.forEach(selections => {
         selections.forEach(productId => {

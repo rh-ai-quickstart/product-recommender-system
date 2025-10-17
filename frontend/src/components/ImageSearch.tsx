@@ -9,51 +9,74 @@ import {
   FileUpload,
 } from '@patternfly/react-core';
 import { LinkIcon, UploadIcon, ImageIcon } from '@patternfly/react-icons';
-import {
-  useProductSearchByImageLink,
-  useProductSearchByImage,
-} from '../hooks/useProducts';
-import { ImageSearchResults } from './image-search-results';
+import { useNavigate } from '@tanstack/react-router';
 
 export const ImageSearch: React.FC = () => {
   const [searchType, setSearchType] = useState<'url' | 'file'>('url');
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [filename, setFilename] = useState('');
-  const [urlSearchTrigger, setUrlSearchTrigger] = useState('');
-  const [fileSearchTrigger, setFileSearchTrigger] = useState<File | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const navigate = useNavigate();
 
-  const {
-    data: urlData,
-    error: urlError,
-    isLoading: urlLoading,
-  } = useProductSearchByImageLink(urlSearchTrigger, 10, !!urlSearchTrigger);
-  const {
-    data: fileData,
-    error: fileError,
-    isLoading: fileLoading,
-  } = useProductSearchByImage(fileSearchTrigger, 10, !!fileSearchTrigger);
+  // Helper function to store file temporarily in localStorage
+  const storeTemporaryFile = (file: File): Promise<string> => {
+    const fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  // Use the appropriate data/error/loading based on search type
-  const data = searchType === 'url' ? urlData : fileData;
-  const error = searchType === 'url' ? urlError : fileError;
-  const isLoading = searchType === 'url' ? urlLoading : fileLoading;
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const fileData = {
+            name: file.name,
+            type: file.type,
+            dataUrl: reader.result as string,
+          };
+          localStorage.setItem(
+            `temp_image_${fileId}`,
+            JSON.stringify(fileData)
+          );
+          resolve(fileId);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleUrlSearch = async () => {
     if (!imageUrl.trim()) return;
     setIsSearching(true);
-    setFileSearchTrigger(null); // Clear file search
-    setUrlSearchTrigger(imageUrl);
-    setIsSearching(false);
+
+    try {
+      navigate({
+        to: '/image-search',
+        search: { type: 'url', query: imageUrl.trim(), fileId: '' },
+      });
+    } catch (error) {
+      console.error('Navigation error:', error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleFileSearch = async () => {
     if (!imageFile) return;
     setIsSearching(true);
-    setUrlSearchTrigger(''); // Clear URL search
-    setFileSearchTrigger(imageFile);
-    setIsSearching(false);
+
+    try {
+      const fileId = await storeTemporaryFile(imageFile);
+      navigate({
+        to: '/image-search',
+        search: { type: 'file', query: '', fileId },
+      });
+    } catch (error) {
+      console.error('File storage or navigation error:', error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleFileChange = (_event: any, file: File) => {
@@ -64,7 +87,6 @@ export const ImageSearch: React.FC = () => {
   const handleFileClear = () => {
     setImageFile(null);
     setFilename('');
-    setFileSearchTrigger(null);
   };
 
   return (
@@ -96,7 +118,6 @@ export const ImageSearch: React.FC = () => {
               padding: '12px 20px',
               fontWeight: '500',
               transition: 'all 0.2s ease',
-              border: 'none',
               ...(searchType === 'url' && {
                 background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
                 color: 'white',
@@ -114,11 +135,10 @@ export const ImageSearch: React.FC = () => {
               padding: '12px 20px',
               fontWeight: '500',
               transition: 'all 0.2s ease',
-              border: 'none',
               ...(searchType === 'file' && {
-                background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+                background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
                 color: 'white',
-                boxShadow: '0 2px 4px rgba(231, 76, 60, 0.3)',
+                boxShadow: '0 2px 4px rgba(52, 152, 219, 0.3)',
               }),
             }}
           />
@@ -141,7 +161,6 @@ export const ImageSearch: React.FC = () => {
               aria-label='Image URL input'
               style={{
                 borderRadius: '8px',
-                border: '2px solid #e9ecef',
                 padding: '12px 16px',
                 fontSize: '16px',
                 transition: 'border-color 0.2s ease',
@@ -153,19 +172,19 @@ export const ImageSearch: React.FC = () => {
                 variant='primary'
                 onClick={handleUrlSearch}
                 isDisabled={!imageUrl.trim() || isSearching}
-                icon={<LinkIcon />}
+                icon={<LinkIcon style={{ color: 'white' }} />}
                 style={{
                   background:
                     'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
-                  border: 'none',
                   borderRadius: '8px',
                   padding: '12px 24px',
                   fontWeight: '600',
                   boxShadow: '0 2px 4px rgba(52, 152, 219, 0.3)',
                   transition: 'all 0.2s ease',
+                  color: 'white',
                 }}
               >
-                Search Similar
+                Search
               </Button>
             </Tooltip>
           </InputGroup>
@@ -200,29 +219,19 @@ export const ImageSearch: React.FC = () => {
                 icon={<UploadIcon />}
                 style={{
                   background:
-                    'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
-                  border: 'none',
+                    'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
                   borderRadius: '8px',
                   padding: '12px 24px',
                   fontWeight: '600',
-                  boxShadow: '0 2px 4px rgba(231, 76, 60, 0.3)',
+                  boxShadow: '0 2px 4px rgba(52, 152, 219, 0.3)',
                   transition: 'all 0.2s ease',
                 }}
               >
-                Search Similar
+                Search
               </Button>
             </div>
           )}
         </div>
-      )}
-
-      {/* Display results or loading state */}
-      {(urlSearchTrigger || fileSearchTrigger) && (
-        <ImageSearchResults
-          products={data || []}
-          isLoading={isLoading}
-          error={error}
-        />
       )}
     </div>
   );

@@ -15,6 +15,7 @@ import { Route as ProtectedRouteRouteImport } from './routes/_protected/route'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as ProtectedSearchRouteImport } from './routes/_protected/search'
 import { Route as ProtectedPreferencesRouteImport } from './routes/_protected/preferences'
+import { Route as ProtectedImageSearchRouteImport } from './routes/_protected/image-search'
 import { Route as ProtectedCatalogRouteImport } from './routes/_protected/catalog'
 import { Route as ProtectedAccountRouteImport } from './routes/_protected/account'
 import { Route as ProtectedProductIndexRouteImport } from './routes/_protected/product/index'
@@ -49,6 +50,11 @@ const ProtectedPreferencesRoute = ProtectedPreferencesRouteImport.update({
   path: '/preferences',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
+const ProtectedImageSearchRoute = ProtectedImageSearchRouteImport.update({
+  id: '/image-search',
+  path: '/image-search',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
 const ProtectedCatalogRoute = ProtectedCatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/account': typeof ProtectedAccountRoute
   '/catalog': typeof ProtectedCatalogRoute
+  '/image-search': typeof ProtectedImageSearchRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/search': typeof ProtectedSearchRoute
   '/': typeof ProtectedIndexRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/account': typeof ProtectedAccountRoute
   '/catalog': typeof ProtectedCatalogRoute
+  '/image-search': typeof ProtectedImageSearchRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/search': typeof ProtectedSearchRoute
   '/': typeof ProtectedIndexRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_protected/account': typeof ProtectedAccountRoute
   '/_protected/catalog': typeof ProtectedCatalogRoute
+  '/_protected/image-search': typeof ProtectedImageSearchRoute
   '/_protected/preferences': typeof ProtectedPreferencesRoute
   '/_protected/search': typeof ProtectedSearchRoute
   '/_protected/': typeof ProtectedIndexRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/account'
     | '/catalog'
+    | '/image-search'
     | '/preferences'
     | '/search'
     | '/'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/account'
     | '/catalog'
+    | '/image-search'
     | '/preferences'
     | '/search'
     | '/'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_protected/account'
     | '/_protected/catalog'
+    | '/_protected/image-search'
     | '/_protected/preferences'
     | '/_protected/search'
     | '/_protected/'
@@ -193,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPreferencesRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
+    '/_protected/image-search': {
+      id: '/_protected/image-search'
+      path: '/image-search'
+      fullPath: '/image-search'
+      preLoaderRoute: typeof ProtectedImageSearchRouteImport
+      parentRoute: typeof ProtectedRouteRoute
+    }
     '/_protected/catalog': {
       id: '/_protected/catalog'
       path: '/catalog'
@@ -227,6 +246,7 @@ declare module '@tanstack/react-router' {
 interface ProtectedRouteRouteChildren {
   ProtectedAccountRoute: typeof ProtectedAccountRoute
   ProtectedCatalogRoute: typeof ProtectedCatalogRoute
+  ProtectedImageSearchRoute: typeof ProtectedImageSearchRoute
   ProtectedPreferencesRoute: typeof ProtectedPreferencesRoute
   ProtectedSearchRoute: typeof ProtectedSearchRoute
   ProtectedIndexRoute: typeof ProtectedIndexRoute
@@ -237,6 +257,7 @@ interface ProtectedRouteRouteChildren {
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
   ProtectedAccountRoute: ProtectedAccountRoute,
   ProtectedCatalogRoute: ProtectedCatalogRoute,
+  ProtectedImageSearchRoute: ProtectedImageSearchRoute,
   ProtectedPreferencesRoute: ProtectedPreferencesRoute,
   ProtectedSearchRoute: ProtectedSearchRoute,
   ProtectedIndexRoute: ProtectedIndexRoute,

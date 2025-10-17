@@ -1,36 +1,110 @@
 import {
   PageSection,
   Title,
-  Spinner,
   EmptyState,
   EmptyStateBody,
 } from '@patternfly/react-core';
 import { LazyProductGallery } from './LazyProductGallery';
-import type { ProductData } from '../types';
+import { GallerySkeleton } from './gallery-skeleton';
+import {
+  useProductSearchByImageLink,
+  useProductSearchByImage,
+} from '../hooks/useProducts';
+import { DEFAULT_SEARCH_RESULTS_COUNT } from '../constants';
 
-interface ImageSearchResultsProps {
-  products: ProductData[];
-  isLoading: boolean;
-  error: any;
+interface ImageSearchResultsPageProps {
+  type: 'url' | 'file';
+  query: string;
+  fileId: string;
 }
 
-export function ImageSearchResults({
-  products,
-  isLoading,
-  error,
-}: ImageSearchResultsProps) {
+export function ImageSearchResultsPage({
+  type,
+  query,
+  fileId,
+}: ImageSearchResultsPageProps) {
+  // Get the stored file for file searches
+  const getStoredFile = (id: string): File | null => {
+    if (!id) return null;
+    try {
+      const stored = localStorage.getItem(`temp_image_${id}`);
+      if (!stored) return null;
+
+      const { name, type, dataUrl } = JSON.parse(stored);
+      // Convert base64 back to File
+      const byteCharacters = atob(dataUrl.split(',')[1]);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      return new File([byteArray], name, { type });
+    } catch (error) {
+      console.error('Error retrieving stored file:', error);
+      return null;
+    }
+  };
+
+  const storedFile = type === 'file' ? getStoredFile(fileId) : null;
+
+  // Use appropriate hook based on search type
+  const urlResults = useProductSearchByImageLink(
+    query,
+    DEFAULT_SEARCH_RESULTS_COUNT,
+    type === 'url' && !!query
+  );
+
+  const fileResults = useProductSearchByImage(
+    storedFile,
+    DEFAULT_SEARCH_RESULTS_COUNT,
+    type === 'file' && !!storedFile
+  );
+
+  const { data, error, isLoading } = type === 'url' ? urlResults : fileResults;
+  const products = data || [];
+
+  // Determine display query
+  const displayQuery =
+    type === 'url' ? query : storedFile?.name || 'uploaded image';
+
+  if (!query && !fileId) {
+    return (
+      <PageSection hasBodyWrapper={false}>
+        <EmptyState>
+          <Title headingLevel='h4' size='lg'>
+            No search parameters provided
+          </Title>
+          <EmptyStateBody>
+            Please provide an image URL or upload a file to search for similar
+            products.
+          </EmptyStateBody>
+        </EmptyState>
+      </PageSection>
+    );
+  }
+
+  if (type === 'file' && !storedFile) {
+    return (
+      <PageSection hasBodyWrapper={false}>
+        <EmptyState>
+          <Title headingLevel='h4' size='lg'>
+            Image file not found
+          </Title>
+          <EmptyStateBody>
+            The uploaded image could not be found. Please try uploading again.
+          </EmptyStateBody>
+        </EmptyState>
+      </PageSection>
+    );
+  }
+
   if (isLoading) {
     return (
       <PageSection hasBodyWrapper={false}>
         <Title headingLevel={'h1'} style={{ marginTop: '15px' }}>
-          Similar Products Found
+          Image Search Results for "{displayQuery}"
         </Title>
-        <div style={{ textAlign: 'center', marginTop: '32px' }}>
-          <Spinner size='lg' />
-          <div style={{ marginTop: '16px', color: '#666' }}>
-            Loading similar products...
-          </div>
-        </div>
+        <GallerySkeleton count={8} />
       </PageSection>
     );
   }
@@ -39,14 +113,15 @@ export function ImageSearchResults({
     return (
       <PageSection hasBodyWrapper={false}>
         <Title headingLevel={'h1'} style={{ marginTop: '15px' }}>
-          Similar Products Found
+          Image Search Results for "{displayQuery}"
         </Title>
         <EmptyState>
           <Title headingLevel='h4' size='lg'>
-            Error in Image Search
+            Error searching for similar products
           </Title>
           <EmptyStateBody>
-            There was an error while searching. Please try again.
+            There was an error while searching for similar products. Please try
+            again.
             {error instanceof Error && (
               <div
                 style={{
@@ -69,7 +144,7 @@ export function ImageSearchResults({
     <>
       <PageSection hasBodyWrapper={false}>
         <Title headingLevel={'h1'} style={{ marginTop: '15px' }}>
-          Similar Products Found
+          Image Search Results for "{displayQuery}"
         </Title>
 
         {products.length === 0 ? (
@@ -78,8 +153,8 @@ export function ImageSearchResults({
               No similar products found
             </Title>
             <EmptyStateBody>
-              No similar products found. Try a different image or search
-              criteria.
+              No similar products found for "{displayQuery}". Try a different
+              image or search criteria.
             </EmptyStateBody>
           </EmptyState>
         ) : (

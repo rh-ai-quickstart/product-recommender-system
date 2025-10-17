@@ -395,23 +395,11 @@ export const CartDropdown = ({ isOpen, onClose }: CartDropdownProps) => {
                 style={{ width: '100%' }}
                 isDisabled={!cartItems?.length}
                 onClick={() => {
-                  alert('🚀 Checkout coming soon!');
+                  alert('In a production app, this is where users will be led to a billing page.');
                   onClose();
                 }}
               >
                 Checkout ({cartItems?.length || 0} items)
-              </Button>
-            </FlexItem>
-            <FlexItem>
-              <Button
-                variant='secondary'
-                style={{ width: '100%' }}
-                onClick={() => {
-                  console.log('🛒 View full cart');
-                  onClose();
-                }}
-              >
-                View Cart
               </Button>
             </FlexItem>
           </Flex>
