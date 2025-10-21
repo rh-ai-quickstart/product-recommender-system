@@ -47,9 +47,22 @@ Recommended OpenShift AI components enabled: DataSciencePipelines, Feast Operato
 
 ### Minimum hardware requirements
 
+- **CPU**: 6-8 cores 
+- **Memory**: 16-20Gi 
+- **Storage**: 150-200Gi
+
 ### Minimum software requirements
 
+- **OpenShift 4.17.0+** cluster with OpenShift AI
+- **oc CLI 4.17.0+** and **Helm 3.x**
+- **Access to quay.io** to be able to pull down container images
+
 ### Required user permissions
+
+- **Namespace admin** permissions in the target OpenShift project
+- **Container registry access** to pull images from quay.io and registry.redhat.io  
+- **OpenShift AI access** to create DataSciencePipelines and Feast components
+- **Storage provisioning** rights to create persistent volumes (PVCs)
 
 ---
 
