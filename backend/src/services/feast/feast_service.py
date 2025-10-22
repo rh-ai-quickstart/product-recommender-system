@@ -209,6 +209,7 @@ class FeastService:
             contains_limit = max(k * 3, 20)
 
             with engine.connect() as conn:
+
                 def _query_item_ids(where_clause: str, params: dict, limit: int) -> List[str]:
                     rows = conn.execute(
                         sql_text(

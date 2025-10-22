@@ -40,7 +40,7 @@ ENV HF_HOME=/hf_cache
 ENV PYTHONPATH=/app/backend:/app/backend/src:/app/recommendation-core/src
 
 # Pre-download the model and fix permissions again after download
-RUN  pip3 install uv && uv pip install -r pyproject.toml && \
+RUN pip install --upgrade pip && pip3 install uv && uv pip install -r pyproject.toml && \
     mkdir -p /hf_cache && \
     python3 -c "from transformers import CLIPProcessor, CLIPModel; \
                 CLIPProcessor.from_pretrained('openai/clip-vit-base-patch32'); \

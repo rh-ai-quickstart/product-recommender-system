@@ -22,6 +22,9 @@ MINIMUM_OC_VERSION = "4.17.0"
 MINIMUM_USERID_LENGTH = 3
 MINIMUM_PASSWORD_LENGTH = 8
 REQUIRED_PARAMS = minio.userId minio.password
+# Model configuration defaults
+OLLAMA_MODEL ?= meta-llama/Llama-3.1-8B-Instruct
+MODEL_ENDPOINT ?= https://llama-3-1-8b-instruct-predictor-kickstart-llms.apps.ai-dev02.kni.syseng.devcluster.openshift.com/v1
 
 # Helm argument helpers
 helm_pgvector_args = \
@@ -32,6 +35,10 @@ helm_pgvector_args = \
 dataset_args = \
 	--set datasetUrl=$(DATASET_URL)
 
+model_args = \
+	--set llmModel.ollamaModel=$(OLLAMA_MODEL) \
+	--set llmModel.modelEndpoint=$(MODEL_ENDPOINT)
+
 # Default target
 .PHONY: help
 help:
@@ -41,9 +48,11 @@ help:
 	@echo "  status        - Check status of the deployment"
 	@echo ""
 	@echo "Configuration options (set via environment variables or make arguments):"
-	@echo "  NAMESPACE                - Target namespace (default: llama-stack-rag)"
-	@echo "  minio.userId                - User ID to use for minio installation"
-	@echo "  minio.password                - Password to use for minio installation"
+	@echo "  NAMESPACE                - Target namespace"
+	@echo "  minio.userId             - User ID to use for minio installation"
+	@echo "  minio.password           - Password to use for minio installation"
+	@echo "  OLLAMA_MODEL             - Ollama model to use (default: meta-llama/Llama-3.1-8B-Instruct)"
+	@echo "  MODEL_ENDPOINT           - Model endpoint URL"
 
 # Older version of oc will raise error processing some of the commands in this make file; enforce a minimum version
 .PHONY: check-oc-version
@@ -145,15 +154,17 @@ create-dynamic-secret:
 product-recommender-install:
 	@$(eval PGVECTOR_ARGS := $(call helm_pgvector_args))
 	@$(eval DATASET_ARGS := $(call dataset_args))
+	@$(eval MODEL_ARGS := $(call model_args))
 	@echo "Installing $(PRODUCT_RECOMMENDER_CHART) helm chart"
 	@echo "Waiting for model services to deploy. It may take around 10-15 minutes depending on the size of the database..."
 	@helm -n $(NAMESPACE) upgrade --install $(PRODUCT_RECOMMENDER_CHART) $(PRODUCT_RECOMMENDER_CHART) -n $(NAMESPACE) \
 		$(PGVECTOR_ARGS) \
 		$(DATASET_ARGS) \
+		$(MODEL_ARGS) \
 		$(EXTRA_HELM_ARGS) --set strimzi-kafka-operator.createGlobalResources=false --timeout 300m
 	@oc rollout status deploy
 	@echo "$(PRODUCT_RECOMMENDER_CHART) installed successfully"
-	@echo "Frontend URL: http://$$(oc get route product-recommender-system-frontend -o jsonpath='{.spec.host}' -n $(NAMESPACE))"
+	@echo "Frontend URL: https://$$(oc get route product-recommender-system-frontend -o jsonpath='{.spec.host}' -n $(NAMESPACE))"
 
 # Uninstall the deployment and clean up
 .PHONY: uninstall

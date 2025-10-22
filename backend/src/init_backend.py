@@ -262,7 +262,7 @@ async def _generate_reviews_with_llm(
     min_words = int(os.getenv("LLM_COMMENT_MIN_WORDS", "60"))
     max_words = int(os.getenv("LLM_COMMENT_MAX_WORDS", "120"))
 
-    if not api_base or not api_key:
+    if not (api_base and api_key):
         raise RuntimeError(
             "LLM_API_BASE and LLM_API_KEY must be set when USE_LLM_FOR_REVIEWS is enabled"
         )
@@ -1182,12 +1182,13 @@ async def setup_all():
         logger.info("✅ Database initialization completed successfully")
         await populate_categories()
         logger.info("✅ Categories populated successfully")
-        
+
         # Convert string preferences to UserPreference records now that categories exist
         from database.fetch_feast_users import convert_all_string_preferences_to_records
+
         await convert_all_string_preferences_to_records()
         logger.info("✅ User preferences converted successfully")
-        
+
         await populate_products()
         logger.info("✅ Products populated successfully")
         await populate_reviews()

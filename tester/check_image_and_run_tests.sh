@@ -105,8 +105,8 @@ if ! timeout 30m make SHELL=/bin/bash install NAMESPACE=$TESTING_NAMESPACE minio
     cleanup_and_exit 1
 fi
 
-# Wait 3 minutes for the pipeline to finish
-sleep 180
+# Wait 10 minutes for the pipeline to finish
+sleep 600
 echo "✅ Installation completed successfully"
 echo ""
 

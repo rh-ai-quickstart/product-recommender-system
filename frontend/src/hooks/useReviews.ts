@@ -37,7 +37,7 @@ export const useProductReviewSummarization = (
     queryKey: ['reviews', productId, 'summarization'],
     queryFn: () => summarizeProductReviews(productId),
     enabled: !!productId && enabled,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 0,
   });
 };
 

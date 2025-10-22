@@ -18,7 +18,7 @@ router = APIRouter(prefix="/products", tags=["reviews"])
 MODEL_ENDPOINT = (
     os.getenv(
         "MODEL_ENDPOINT",
-        "http://llama-3-1-8b-instruct-predictor-kickstart-llms.apps.ai-dev02.kni.syseng.devcluster.openshift.com/v1",  # noqa: E501
+        "https://llama-3-1-8b-instruct-predictor-kickstart-llms.apps.ai-dev02.kni.syseng.devcluster.openshift.com/v1",  # noqa: E501
     )
     + "/chat/completions"
 )
@@ -293,13 +293,17 @@ Please provide a clear, concise summary include the adventage disadvantages and 
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are a helpful, smart buyer who helps customers summarize reviews on electronic shops.",  # noqa: E501
+                        "content": "You are a helpful, smart shopper who helps customers summarize other customers reviews to make it easier for them to decide whether to buy a product.",  # noqa: E501
                     },
                     {"role": "user", "content": prompt},
                 ],
                 "stream": False,
             },
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {os.getenv('SUMMARY_LLM_API_KEY', "")}",
+                # TODO: not allowed missin barrer token error if not set
+            },
         )
 
         # Extract model response from JSON
