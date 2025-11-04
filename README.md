@@ -137,8 +137,7 @@ Detailed docs live in component READMEs:
 
 ---
 
-## License & contributions
-- License: same terms as Red Hat AI Quickstart
+## Contributions
 - Contributions welcome via PRs; please update component READMEs when changing behavior
 
 ## Tags
