@@ -286,6 +286,12 @@ Reviews:
 Please provide a clear, concise summary include the adventage disadvantages and 2-3 sentences of conclusion:
 """  # noqa: E501
 
+        # Prepare headers - only add Authorization if API key is provided
+        headers = {"Content-Type": "application/json"}
+        api_key = os.getenv('SUMMARY_LLM_API_KEY', "")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        
         response = requests.post(
             MODEL_ENDPOINT,
             json={
@@ -299,15 +305,23 @@ Please provide a clear, concise summary include the adventage disadvantages and 
                 ],
                 "stream": False,
             },
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {os.getenv('SUMMARY_LLM_API_KEY', "")}",
-                # TODO: not allowed missin barrer token error if not set
-            },
+            headers=headers,
         )
 
+        # Check if request was successful
+        response.raise_for_status()
+        
         # Extract model response from JSON
         model_response = response.json()
+        
+        # Debug logging
+        logger.info(f"LLM Response status: {response.status_code}")
+        logger.info(f"LLM Response keys: {list(model_response.keys())}")
+        
+        if "choices" not in model_response:
+            logger.error(f"No 'choices' in response: {model_response}")
+            raise ValueError(f"Invalid LLM response format: {model_response}")
+        
         summary = model_response["choices"][0]["message"]["content"].strip()
         return ReviewSummarization(productId=product_id, summary=summary)
 
