@@ -91,7 +91,7 @@ spec:
             {{- toYaml .Values.env | nindent 12 }}
             {{- end }}
             {{- if .Values.llmModel.ollamaModel }}
-            - name: OLLAMA_MODEL
+            - name: MODEL_NAME
               value: {{ .Values.llmModel.ollamaModel }}
             {{- end }}
             {{- if .Values.llmModel.modelEndpoint }}

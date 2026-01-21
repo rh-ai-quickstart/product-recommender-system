@@ -15,15 +15,13 @@ from routes.auth import get_current_user
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/products", tags=["reviews"])
 
-MODEL_ENDPOINT = (
-    os.getenv(
-        "MODEL_ENDPOINT",
-        "https://redhataillama-31-8b-instruct-quickstart-llms.apps.ai-dev02.kni.syseng.devcluster.openshift.com",  # noqa: E501
-    )
-    + "/v1/chat/completions"
-)
+MODEL_ENDPOINT = os.getenv("MODEL_ENDPOINT")
+MODEL_NAME = os.getenv("MODEL_NAME")
 
-MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama-31-8b-instruct")
+assert MODEL_ENDPOINT is not None, "Must assign value to model endpoint"
+assert MODEL_NAME is not None, "Must assign value to model name"
+
+MODEL_ENDPOINT = MODEL_ENDPOINT + "/v1/chat/completions"
 
 
 async def _check_product_exists(product_id: str, db: AsyncSession) -> None:
@@ -288,10 +286,10 @@ Please provide a clear, concise summary include the adventage disadvantages and 
 
         # Prepare headers - only add Authorization if API key is provided
         headers = {"Content-Type": "application/json"}
-        api_key = os.getenv('SUMMARY_LLM_API_KEY', "")
+        api_key = os.getenv("SUMMARY_LLM_API_KEY", "")
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
-        
+
         response = requests.post(
             MODEL_ENDPOINT,
             json={
@@ -310,18 +308,18 @@ Please provide a clear, concise summary include the adventage disadvantages and 
 
         # Check if request was successful
         response.raise_for_status()
-        
+
         # Extract model response from JSON
         model_response = response.json()
-        
+
         # Debug logging
         logger.info(f"LLM Response status: {response.status_code}")
         logger.info(f"LLM Response keys: {list(model_response.keys())}")
-        
+
         if "choices" not in model_response:
             logger.error(f"No 'choices' in response: {model_response}")
             raise ValueError(f"Invalid LLM response format: {model_response}")
-        
+
         summary = model_response["choices"][0]["message"]["content"].strip()
         return ReviewSummarization(productId=product_id, summary=summary)
 

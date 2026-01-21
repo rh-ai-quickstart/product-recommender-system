@@ -76,7 +76,7 @@ cd product-recommender-system/helm
 
 2) Install
 ```bash
-make install NAMESPACE=<namespace> minio.userId=<minio user Id> minio.password=<minio password> OLLAMA_MODEL=<ollama model name> MODEL_ENDPOINT=<http://model-url.com/v1>
+make install NAMESPACE=<namespace> minio.userId=<minio user Id> minio.password=<minio password> MODEL_NAME=<ollama model name> MODEL_ENDPOINT=<http://model-url.com/v1>
 ```
 This deploys: Postgres+pgvector, Feast registry/secret, backend, frontend, and the training pipeline server.
 

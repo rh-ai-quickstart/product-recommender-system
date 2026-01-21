@@ -226,7 +226,7 @@ env:
 # Model configuration
 llmModel:
   ollamaModel: <this is used to set the ollama model used for the reviews summarization>
-  # provide this when calling make (e.g., make install OLLAMA_MODEL=meta-llama/Llama-3.1-8B-Instruct)
+  # provide this when calling make (e.g., make install MODEL_NAME=meta-llama/Llama-3.1-8B-Instruct)
   modelEndpoint: <this is the url of the model that used to summarize the reviews>
   # provide this when calling make (e.g., make install MODEL_ENDPOINT=https://model-url.com/v1)
 

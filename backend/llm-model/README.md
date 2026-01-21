@@ -28,4 +28,4 @@ The endpoint should be in the form: `https://<MODEL>-<NAMESPACE>.apps.ai-<CLUSTE
 
 Example for model name: `meta-llama/Llama-3.1-8B-Instruct`
 
-5. When deploying the recommender system, add the flags `OLLAMA_MODEL=<MODEL NAME> MODEL_ENDPOINT=<MODEL ENDPOINT>` to the make command.
+5. When deploying the recommender system, add the flags `MODEL_NAME=<MODEL NAME> MODEL_ENDPOINT=<MODEL ENDPOINT>` to the make command.

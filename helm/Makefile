@@ -22,9 +22,9 @@ MINIMUM_OC_VERSION = "4.17.0"
 MINIMUM_USERID_LENGTH = 3
 MINIMUM_PASSWORD_LENGTH = 8
 REQUIRED_PARAMS = minio.userId minio.password
-# Model configuration defaults
-OLLAMA_MODEL ?= llama-31-8b-instruct
-MODEL_ENDPOINT ?= https://llama-31-8b-instruct-samouelian-eck.apps.ai-dev01.kni.syseng.devcluster.openshift.com
+# Model configuration - no defaults, must be provided
+MODEL_NAME ?=
+MODEL_ENDPOINT ?=
 # Helm argument helpers
 helm_pgvector_args = \
 	--set pgvector.secret.user=$(POSTGRES_USER) \
@@ -35,7 +35,7 @@ dataset_args = \
 	--set datasetUrl=$(DATASET_URL)
 
 model_args = \
-	--set llmModel.ollamaModel=$(OLLAMA_MODEL) \
+	--set llmModel.ollamaModel=$(MODEL_NAME) \
 	--set llmModel.modelEndpoint=$(MODEL_ENDPOINT)
 
 # Default target
@@ -47,11 +47,11 @@ help:
 	@echo "  status        - Check status of the deployment"
 	@echo ""
 	@echo "Configuration options (set via environment variables or make arguments):"
-	@echo "  NAMESPACE                - Target namespace"
-	@echo "  minio.userId             - User ID to use for minio installation"
-	@echo "  minio.password           - Password to use for minio installation"
-	@echo "  OLLAMA_MODEL             - Ollama model to use (default: meta-llama/Llama-3.1-8B-Instruct)"
-	@echo "  MODEL_ENDPOINT           - Model endpoint URL"
+	@echo "  NAMESPACE                - Target namespace (required)"
+	@echo "  minio.userId             - User ID to use for minio installation (required)"
+	@echo "  minio.password           - Password to use for minio installation (required)"
+	@echo "  MODEL_NAME               - Model name to use for review summarization (required)"
+	@echo "  MODEL_ENDPOINT           - Model endpoint URL (required)"
 
 # Older version of oc will raise error processing some of the commands in this make file; enforce a minimum version
 .PHONY: check-oc-version
@@ -81,6 +81,20 @@ check-minio-credentials:
 		exit 1; \
 	fi
 
+# Model configuration must be provided
+.PHONY: check-model-config
+check-model-config:
+	@if [ -z "$(MODEL_NAME)" ]; then \
+		echo "ERROR: MODEL_NAME is required but not set."; \
+		echo "Please provide MODEL_NAME when running make install."; \
+		exit 1; \
+	fi
+	@if [ -z "$(MODEL_ENDPOINT)" ]; then \
+		echo "ERROR: MODEL_ENDPOINT is required but not set."; \
+		echo "Please provide MODEL_ENDPOINT when running make install."; \
+		exit 1; \
+	fi
+
 # Create namespace and deploy
 namespace:
 	@oc create namespace $(NAMESPACE) &> /dev/null && oc label namespace $(NAMESPACE) modelmesh-enabled=false ||:
@@ -94,7 +108,7 @@ depend:
 	@helm dependency update $(MINIO_CHART) &> /dev/null
 
 .PHONY: install
-install: check-oc-version check-minio-credentials namespace depend minio-install pipeline-server-install create-dynamic-secret product-recommender-install
+install: check-oc-version check-minio-credentials check-model-config namespace depend minio-install pipeline-server-install create-dynamic-secret product-recommender-install
 
 .PHONY: minio-install
 minio-install:
