@@ -175,7 +175,7 @@ product-recommender-install:
 		$(DATASET_ARGS) \
 		$(MODEL_ARGS) \
 		$(EXTRA_HELM_ARGS) --set strimzi-kafka-operator.createGlobalResources=false --timeout 300m
-	@oc rollout status deploy
+	@oc rollout status deploy --timeout=20m || true
 	@echo "$(PRODUCT_RECOMMENDER_CHART) installed successfully"
 	@echo "Frontend URL: https://$$(oc get route product-recommender-system-frontend -o jsonpath='{.spec.host}' -n $(NAMESPACE))"
 

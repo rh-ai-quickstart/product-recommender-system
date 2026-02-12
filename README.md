@@ -75,12 +75,18 @@ cd product-recommender-system/helm
 ```
 
 2) Install
-```bash
-make install NAMESPACE=<namespace> minio.userId=<minio user Id> minio.password=<minio password> MODEL_NAME=<model resource name> MODEL_ENDPOINT=<http://model-url.com/v1>
-```
-This deploys: Postgres+pgvector, Feast registry/secret, backend, frontend, and the training pipeline server.
 
-Note: You must also provide the api key for your model in the helm/product-recommender-system/values.yaml file (see SUMMARY_LLM_API_KEY in the values.yaml file)
+IMPORTANT: This application requires an LLM for product review summarization. The LLM is not installed automatically.
+
+If you already have an LLM deployed, please provide the MODEL_NAME and MODEL_ENDPOINT in the make command below and the api key  
+in the helm/product-recommender-system/values.yaml file (see 'SUMMARY_LLM_API_KEY' in the values file).
+
+You may also manually deploy an LLM by following the steps in this document below (see the "RHOAI 3.0 Model Deployment Steps" section).
+
+```bash
+make install NAMESPACE=<namespace> minio.userId=<minio user Id> minio.password=<minio password> MODEL_NAME=<model resource name> MODEL_ENDPOINT=<http://model-url.com>
+```
+The command above deploys the remaining components the application requires. NOTE: Don't add '/v1' to the model endpoint. Make sure to use your inference server's external endpoint.
 
 3) Access routes (after pods Ready)
 ```bash
