@@ -129,6 +129,7 @@ make uninstall NAMESPACE=<ns>
 
 4. **Retrieve Endpoints**: Once deployed, go to **Data Science Projects**, select your project, and click the **Models** tab.
    - Click *Internal and external endpoint* to view the URLs. Record both, as some client applications cannot resolve internal cluster addresses.
+   - When running on CPU, you might have to create additional endpoint Route with increased timeout (default is 30s), so that the model has enough time to respond.
    - Expand the model list item (using the arrow on the left) and scroll down to copy the **Token authentication** value.
 
 Your model is now ready. Use the endpoint URL and resource name in the `make install` command. 
