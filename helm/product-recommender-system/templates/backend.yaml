@@ -296,6 +296,8 @@ metadata:
   labels:
     {{- include "product-recommender-system.labels" . | nindent 4 }}
     app.kubernetes.io/component: frontend
+  annotations:
+    haproxy.router.openshift.io/timeout: 3m
 spec:
   to:
     kind: Service
