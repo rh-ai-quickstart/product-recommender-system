@@ -116,10 +116,10 @@ make uninstall NAMESPACE=<ns>
 
 2. **Configure Deployment**: In the deployment dialog, select your project and configure:
    - **Resource Name**: Note the pre-populated name; you will need this later.
-   - **Serving Runtime**: Select the runtime appropriate for your hardware (e.g., vLLM NVIDIA GPU ServingRuntime for KServe).
+   - **Serving Runtime**: Select the runtime appropriate for your hardware (e.g., vLLM NVIDIA GPU ServingRuntime for KServe). For CPU-only deployment, create custom ServingRuntime using [Intel vLLM image](https://hub.docker.com/r/opea/vllm-cpu-ubi).
    - **Deployment Mode**: Choose KServe RawDeployment (unless scale-to-zero is required).
    - **Replicas & Size**: Set the number of replicas (e.g., 1) and server size (e.g., Medium) based on pod requirements.
-   - **Accelerator**: Specify the hardware (e.g., A10G NVIDIA GPU) and count.
+   - **Accelerator (optional)**: Specify the hardware (e.g., A10G NVIDIA GPU) and count or run solely on CPU.
    - **Authentication & Access**:
      - Check *Make deployed models available through an external route* for outside access.
      - Check *Require token authentication*. Always enable this for external routes and store the token securely.
@@ -129,6 +129,7 @@ make uninstall NAMESPACE=<ns>
 
 4. **Retrieve Endpoints**: Once deployed, go to **Data Science Projects**, select your project, and click the **Models** tab.
    - Click *Internal and external endpoint* to view the URLs. Record both, as some client applications cannot resolve internal cluster addresses.
+   - When running on CPU, you might have to create additional endpoint Route with increased timeout (default is 30s), so that the model has enough time to respond.
    - Expand the model list item (using the arrow on the left) and scroll down to copy the **Token authentication** value.
 
 Your model is now ready. Use the endpoint URL and resource name in the `make install` command. 
