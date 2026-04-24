@@ -91,7 +91,18 @@ class UserItemMagnitudeDataset(Dataset):
 # Assuming df is your DataFrame with textual columns
 def tokenize_and_embed_dataframe(df, batch_size=128):
     # Load model and tokenizer
-    #torch.set_num_threads(3)
+
+    import os
+    
+    # Detect available CPUs (respects container limits)
+    if hasattr(os, 'sched_getaffinity'):
+        available_cpus = len(os.sched_getaffinity(0))
+    else:
+        available_cpus = os.cpu_count() or 1
+    
+    torch.set_num_threads(available_cpus)
+    logger.info(f"Using {available_cpus} threads for PyTorch operations")
+
     tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-small-en-v1.5")
     model = AutoModel.from_pretrained("BAAI/bge-small-en-v1.5")
     model.eval()

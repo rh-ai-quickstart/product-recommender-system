@@ -651,10 +651,10 @@ def batch_recommendation():
     load_data_task.set_caching_options(False)
 
     # setting resource requests and limits - TODO: use from environment variables
-    load_data_task.set_cpu_request("2000m")
-    load_data_task.set_memory_request("2000Mi")
-    load_data_task.set_cpu_limit("3000m")
-    load_data_task.set_memory_limit("3000Mi")
+    load_data_task.set_cpu_request("8000m")
+    load_data_task.set_memory_request("4000Mi")
+    load_data_task.set_cpu_limit("8000m")
+    load_data_task.set_memory_limit("4000Mi")
 
     train_model_task = train_model(
         item_df_input=load_data_task.outputs["item_df_output"],
@@ -663,10 +663,10 @@ def batch_recommendation():
     ).after(load_data_task)
 
     # setting resource requests and limits - TODO: use from environment variables
-    train_model_task.set_cpu_request("2000m")
-    train_model_task.set_memory_request("2000Mi")
-    train_model_task.set_cpu_limit("3000m")
-    train_model_task.set_memory_limit("3000Mi")
+    train_model_task.set_cpu_request("8000m")
+    train_model_task.set_memory_request("4000Mi")
+    train_model_task.set_cpu_limit("8000m")
+    train_model_task.set_memory_limit("4000Mi")
 
     train_model_task.set_caching_options(False)
     kubernetes.use_secret_as_env(
@@ -726,10 +726,10 @@ def batch_recommendation():
     generate_candidates_task.set_caching_options(False)
 
     # setting resource requests and limits - TODO: use from environment variables
-    generate_candidates_task.set_cpu_request("2000m")
-    generate_candidates_task.set_memory_request("2000Mi")
-    generate_candidates_task.set_cpu_limit("3000m")
-    generate_candidates_task.set_memory_limit("3000Mi")
+    generate_candidates_task.set_cpu_request("8000m")
+    generate_candidates_task.set_memory_request("4000Mi")
+    generate_candidates_task.set_cpu_limit("8000m")
+    generate_candidates_task.set_memory_limit("4000Mi")
 
     # Add toleration for nodes with disk pressure to avoid eviction
     # This allows the task to continue running even when the node has low ephemeral storage
