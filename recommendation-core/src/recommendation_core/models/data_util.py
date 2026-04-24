@@ -92,14 +92,11 @@ class UserItemMagnitudeDataset(Dataset):
 def tokenize_and_embed_dataframe(df, batch_size=128):
     # Load model and tokenizer
 
-    import os
-    
-    # Detect available CPUs (respects container limits)
-    if hasattr(os, 'sched_getaffinity'):
-        available_cpus = len(os.sched_getaffinity(0))
-    else:
-        available_cpus = os.cpu_count() or 1
-    
+    # The limits for the pods is hard coded in the train-workflow; we could
+    # alternatively read from values.yaml (but this requires multiple, messy hand-offs to get it in this code)
+    # We can also read cgroup CPU quota but this is brittle/cluster version specific code
+
+    available_cpus = 6
     torch.set_num_threads(available_cpus)
     logger.info(f"Using {available_cpus} threads for PyTorch operations")
 
