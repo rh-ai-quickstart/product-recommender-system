@@ -89,8 +89,9 @@ class UserItemMagnitudeDataset(Dataset):
 
 
 # Assuming df is your DataFrame with textual columns
-def tokenize_and_embed_dataframe(df, batch_size=16):
+def tokenize_and_embed_dataframe(df, batch_size=128):
     # Load model and tokenizer
+    #torch.set_num_threads(3)
     tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-small-en-v1.5")
     model = AutoModel.from_pretrained("BAAI/bge-small-en-v1.5")
     model.eval()
@@ -122,7 +123,7 @@ def tokenize_and_embed_dataframe(df, batch_size=16):
                 padding=True,
                 truncation=True,
                 return_tensors="pt",
-                # max_length=512  # Adjust based on model requirements
+                max_length=64  # Adjust based on model requirements
             )
 
             # Move to device
@@ -139,8 +140,8 @@ def tokenize_and_embed_dataframe(df, batch_size=16):
                 )
 
             # Move to CPU and convert to numpy
-            embeddings.append(batch_embeddings.cpu())
-            # break
+            #embeddings.append(batch_embeddings.cpu())
+            embeddings.append(batch_embeddings)
 
         # Concatenate all batch embeddings
         column_embeddings = torch.vstack(embeddings)  # shape: len(df), dim
