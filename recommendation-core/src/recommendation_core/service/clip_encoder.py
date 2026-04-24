@@ -111,11 +111,7 @@ class ClipEncoder:
             texts, padding=True, return_tensors="pt", truncation=True
         )
         with torch.inference_mode():
-            features = self.model.get_text_features(**inputs)
-            # Handle both tensor and model output types for compatibility
-            if hasattr(features, 'last_hidden_state'):
-                return features.pooler_output
-            return features
+            return self.model.get_text_features(**inputs)
 
     def encode_images(self, images: list[Image]):
         inputs = self.image_processor(images, return_tensors="pt")
