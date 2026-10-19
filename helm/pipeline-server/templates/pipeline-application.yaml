@@ -15,9 +15,6 @@ spec:
     deploy: true
     enableOauth: true
     enableSamplePipeline: false
-    managedPipelines:
-      instructLab:
-        state: Removed
   database:
     disableHealthCheck: false
     mariaDB:

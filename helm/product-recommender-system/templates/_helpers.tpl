@@ -146,6 +146,6 @@ spec:
         value: {{ .Values.datasetUrl }}
     {{- include "product-recommender-system.feastEnv" . | nindent 6 }}
     command: ['/bin/sh']
-    args: ['-c', 'export RUN_NAME="batch_training_$(date +%Y_%m_%d_%H_%M_%S)" && ./entrypoint.sh']
+    args: ['-c', 'sed -i s/6000m/2000m/g train-workflow.py && export RUN_NAME="batch_training_$(date +%Y_%m_%d_%H_%M_%S)" && ./entrypoint.sh']
   restartPolicy: Never
 {{- end }}

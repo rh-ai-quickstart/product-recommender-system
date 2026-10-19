@@ -1,26 +1,23 @@
 ---
-{{- $jobName := "kfp-run-job" }}
-{{- $existingJob := (lookup "batch/v1" "Job" .Release.Namespace $jobName) }}
-{{- if not $existingJob }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ $jobName }}
+  name: kfp-run-job
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
   labels:
     pipelines.kubeflow.org/v2_component: 'true'
 spec:
   template:
     {{- include "product-recommender-system.pipeline-job-template" . | nindent 4 }}
-{{- end }}
 
 ---
-{{- $cronJobName := "kfp-run-cronjob" }}
-{{- $existingCronJob := (lookup "batch/v1" "CronJob" .Release.Namespace $cronJobName) }}
-{{- if not $existingCronJob }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ $cronJobName }}
+  name: kfp-run-cronjob
   labels:
     pipelines.kubeflow.org/v2_component: 'true'
 spec:
@@ -30,4 +27,3 @@ spec:
     spec:
       template:
         {{- include "product-recommender-system.pipeline-job-template" . | nindent 8 }}
-{{- end }}
