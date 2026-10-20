@@ -76,15 +76,17 @@ cd product-recommender-system/helm
 
 2) Install
 
-IMPORTANT: This application requires an LLM for product review summarization. The LLM is not installed automatically.
+IMPORTANT: This application requires an LLM for product review summarization. The LLM is not installed automatically. You may manually deploy an LLM by following the steps in this document below (see the "RHOAI 3.0 Model Deployment Steps" section).
 
-If you already have an LLM deployed, please provide the MODEL_NAME and MODEL_ENDPOINT in the make command below and the api key  
-in the helm/product-recommender-system/values.yaml file (see 'SUMMARY_LLM_API_KEY' in the values file).
+Once you have an LLM deployed, please provide the MODEL_NAME, MODEL_ENDPOINT and API key in the make command below. Replace the text between <> with your specific values. For the MODEL_ENDPOINT, DO NOT add a '/v1' at the end of the route (so it should look like this: https://granite.apps.mydevenvironment.kni.syseng.devcluster.openshift.com).
 
-You may also manually deploy an LLM by following the steps in this document below (see the "RHOAI 3.0 Model Deployment Steps" section).
+NOTE: The command assume you have set the model's API key in a local environment variable called MODELAPIKEY (e.g., export MODELAPIKEY="abcd...xyz").
 
 ```bash
-make install NAMESPACE=<namespace> storage.accessKeyId=<storage access key> storage.secretAccessKey=<storage secret key> MODEL_NAME=<model resource name> MODEL_ENDPOINT=<http://model-url.com>
+make install NAMESPACE=<your namespace> \                 
+  storage.accessKeyId=<a s4 user you provide here> storage.secretAccessKey=<an s4 user password you provide here> \
+  MODEL_NAME=<your model resource name> MODEL_ENDPOINT=<your model endpoint> \
+  EXTRA_HELM_ARGS="--set llm.secret.data.SUMMARY_LLM_API_KEY=$MODELAPIKEY"
 ```
 The command above deploys the remaining components the application requires. NOTE: Don't add '/v1' to the model endpoint. Make sure to use your inference server's external endpoint.
 
