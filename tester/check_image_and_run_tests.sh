@@ -99,7 +99,7 @@ echo ""
 # Step 3: Install the system
 echo "=== Step 3: Installing Product Recommender System ==="
 cd /app/helm
-if ! timeout 30m make SHELL=/bin/bash install NAMESPACE=$TESTING_NAMESPACE minio.userId=minio minio.password=minio123; then
+if ! timeout 30m make SHELL=/bin/bash install NAMESPACE=$TESTING_NAMESPACE storage.accessKeyId=testadmin storage.secretAccessKey=testsecret; then
     echo "❌ Installation failed or timed out"
     curl -X POST -H 'Content-type: application/json' --data "{\"text\": '❌ Prouduct recommender system installation failed at $TIMESTAMP ❌'}" $SLACK_WEBHOOK
     cleanup_and_exit 1

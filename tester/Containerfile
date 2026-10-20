@@ -1,16 +1,15 @@
-FROM python:3.12-slim
+FROM registry.access.redhat.com/ubi9/python-311:latest
 
 WORKDIR /app
 
 # Install system dependencies and tools
-RUN apt-get update && \
-    apt-get install -y curl tar jq make bash skopeo && \
+USER 0
+RUN dnf install -y curl tar jq make skopeo && \
     curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -xz -C /usr/local/bin oc && \
     chmod +x /usr/local/bin/oc && \
     # Install Helm
     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    dnf clean all
 
 # Copy helm and tests directories
 COPY helm helm
@@ -20,8 +19,8 @@ COPY tests tests
 COPY ./tester/check_image_and_run_tests.sh check_image_and_run_tests.sh
 
 # Install Python dependencies for testing
-RUN pip3 install --upgrade pip && \
-    pip3 install pytest tavern
+RUN pip install --upgrade pip && \
+    pip install pytest tavern
 
 # Make the scripts executable
 RUN chmod +x ./tests/integration/run_integration_tests.sh
@@ -31,9 +30,19 @@ RUN chmod +x ./check_image_and_run_tests.sh
 RUN helm repo add rh-ai-quickstart https://rh-ai-quickstart.github.io/ai-architecture-charts && \
     helm repo update
 
-# Create a custom Makefile that skips dependency updates
-RUN cp /app/helm/Makefile /app/helm/Makefile.original && \
-    sed 's/install: check-oc-version check-minio-credentials namespace depend/install: check-oc-version check-minio-credentials namespace/' /app/helm/Makefile.original > /app/helm/Makefile
+# Pre-build Helm chart dependencies so charts/ tarballs are present in the image.
+# The dependency tarballs are listed in .gitignore and are never committed, so they
+# must be fetched at image-build time.  Both charts ship a Chart.lock, so
+# `helm dependency build` resolves exact pinned versions without a live network
+# lookup beyond the initial repo-add above.
+RUN helm dependency build /app/helm/product-recommender-system && \
+    helm dependency build /app/helm/aws-compatible-storage
 
+# Create a custom Makefile that skips dependency updates (deps are already
+# baked into the image by the RUN above, so `depend` is not needed at runtime).
+RUN cp /app/helm/Makefile /app/helm/Makefile.original && \
+    sed 's/install: check-oc-version check-storage-credentials check-model-config namespace depend/install: check-oc-version check-storage-credentials check-model-config namespace/' /app/helm/Makefile.original > /app/helm/Makefile
+
+USER 1001
 # Set the default command
 CMD ["/bin/bash", "./check_image_and_run_tests.sh"]

@@ -15,9 +15,6 @@ spec:
     deploy: true
     enableOauth: true
     enableSamplePipeline: false
-    managedPipelines:
-      instructLab:
-        state: Removed
   database:
     disableHealthCheck: false
     mariaDB:
@@ -31,15 +28,15 @@ spec:
     enableExternalRoute: false
     externalStorage:
       basePath: ''
-      bucket:  {{ .Values.minio.defaultBucket }} #Set by make file at deployment time
-      host: {{ .Values.minio.apiEndpoint }} #This is set in the makefile at deployment time
-      port: ''
-      region: {{ .Values.minio.defaultRegion }} #Set by make file at deployment time
+      bucket: {{ .Values.storage.defaultBucket }}
+      host: {{ .Values.storage.apiEndpoint }}
+      port: '{{ .Values.storage.apiPort }}'
+      region: {{ .Values.storage.defaultRegion }}
       s3CredentialsSecret:
-        accessKey: MINIO_ROOT_USER
-        secretKey: MINIO_ROOT_PASSWORD
-        secretName: minio-secret
-      scheme: https
+        accessKey: AWS_ACCESS_KEY_ID
+        secretKey: AWS_SECRET_ACCESS_KEY
+        secretName: {{ .Values.storage.credentialsSecret }}
+      scheme: http
   persistenceAgent:
     deploy: true
     numWorkers: 2

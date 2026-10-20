@@ -335,7 +335,7 @@ def generate_candidates(
     )
 
 
-@dsl.component(base_image=BASE_IMAGE, packages_to_install=["minio", "psycopg2-binary"])
+@dsl.component(base_image=BASE_IMAGE, packages_to_install=["boto3", "psycopg2-binary"])
 def train_model(
     item_df_input: Input[Dataset],
     user_df_input: Input[Dataset],
@@ -357,7 +357,9 @@ def train_model(
 
     import pandas as pd
     import torch
-    from minio import Minio
+    import boto3
+    from botocore.config import Config
+    from botocore.exceptions import ClientError
     from recommendation_core.models.train_two_tower import create_and_train_two_tower
     from sqlalchemy import create_engine, text
     import logging
@@ -450,11 +452,11 @@ def train_model(
             )
             connection.commit()
 
-    minio_client = Minio(
-        endpoint=os.getenv("MINIO_HOST", "endpoint") + ":" + os.getenv("MINIO_PORT", "9000"),
-        access_key=os.getenv("MINIO_ACCESS_KEY", "access-key"),
-        secret_key=os.getenv("MINIO_SECRET_KEY", "secret-key"),
-        secure=False,  # Set to True if using HTTPS
+    s3_client = boto3.client(
+        "s3",
+        endpoint_url=os.getenv("S3_ENDPOINT_URL"),
+        region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+        config=Config(s3={"addressing_style": "path"}),
     )
 
     bucket_name = "user-encoder"
@@ -462,20 +464,17 @@ def train_model(
     configuration = f"user-encoder-config-{new_version}.json"
 
     # Ensure the bucket exists, create it if it doesn't
-    if not minio_client.bucket_exists(bucket_name):
-        minio_client.make_bucket(bucket_name)
+    try:
+        s3_client.head_bucket(Bucket=bucket_name)
+    except ClientError as exc:
+        error_code = exc.response.get("Error", {}).get("Code")
+        if error_code not in {"404", "NoSuchBucket", "NotFound"}:
+            raise
+        s3_client.create_bucket(Bucket=bucket_name)
 
-    minio_client.fput_object(
-        bucket_name=bucket_name,
-        object_name=object_name,
-        file_path=user_output_model.path,
-    )
+    s3_client.upload_file(user_output_model.path, bucket_name, object_name)
     # Save model configurations
-    minio_client.fput_object(
-        bucket_name=bucket_name,
-        object_name=configuration,
-        file_path=models_definition_output.path,
-    )
+    s3_client.upload_file(models_definition_output.path, bucket_name, configuration)
     modelMetadata = NamedTuple(
         "modelMetadata",
         [
@@ -651,9 +650,9 @@ def batch_recommendation():
     load_data_task.set_caching_options(False)
 
     # setting resource requests and limits - TODO: use from environment variables
-    load_data_task.set_cpu_request("6000m")
+    load_data_task.set_cpu_request("2000m")
     load_data_task.set_memory_request("4000Mi")
-    load_data_task.set_cpu_limit("6000m")
+    load_data_task.set_cpu_limit("2000m")
     load_data_task.set_memory_limit("4000Mi")
 
     train_model_task = train_model(
@@ -663,21 +662,26 @@ def batch_recommendation():
     ).after(load_data_task)
 
     # setting resource requests and limits - TODO: use from environment variables
-    train_model_task.set_cpu_request("6000m")
+    train_model_task.set_cpu_request("2000m")
     train_model_task.set_memory_request("4000Mi")
-    train_model_task.set_cpu_limit("6000m")
+    train_model_task.set_cpu_limit("2000m")
     train_model_task.set_memory_limit("4000Mi")
 
     train_model_task.set_caching_options(False)
+    train_model_task.set_env_variable(
+        name="S3_ENDPOINT_URL",
+        value=os.getenv("S3_ENDPOINT_URL", "http://aws-compatible-storage:7480"),
+    )
+    train_model_task.set_env_variable(
+        name="AWS_DEFAULT_REGION",
+        value=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+    )
     kubernetes.use_secret_as_env(
         task=train_model_task,
-        secret_name=os.getenv("MINIO_SECRET_NAME", "ds-pipeline-s3-dspa"),
+        secret_name=os.getenv("S3_SECRET_NAME", "aws-compatible-storage-credentials"),
         secret_key_to_env={
-            "host": "MINIO_HOST",
-            "port": "MINIO_PORT",
-            "accesskey": "MINIO_ACCESS_KEY",
-            "secretkey": "MINIO_SECRET_KEY",
-            "secure": "MINIO_SECURE",
+            "AWS_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID",
+            "AWS_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
         },
     )
     kubernetes.use_secret_as_env(
@@ -726,9 +730,9 @@ def batch_recommendation():
     generate_candidates_task.set_caching_options(False)
 
     # setting resource requests and limits - TODO: use from environment variables
-    generate_candidates_task.set_cpu_request("6000m")
+    generate_candidates_task.set_cpu_request("2000m")
     generate_candidates_task.set_memory_request("4000Mi")
-    generate_candidates_task.set_cpu_limit("6000m")
+    generate_candidates_task.set_cpu_limit("2000m")
     generate_candidates_task.set_memory_limit("4000Mi")
 
     # Add toleration for nodes with disk pressure to avoid eviction

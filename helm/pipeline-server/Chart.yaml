@@ -1,6 +1,6 @@
 apiVersion: v2
-name: minio
-description: A Helm chart for deploying the Open Shift AI pipeline server
+name: pipeline-server
+description: A Helm chart for deploying the OpenShift AI pipeline server
 
 # A chart can be either an 'application' or a 'library' chart.
 #

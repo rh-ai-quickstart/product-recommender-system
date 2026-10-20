@@ -84,7 +84,7 @@ in the helm/product-recommender-system/values.yaml file (see 'SUMMARY_LLM_API_KE
 You may also manually deploy an LLM by following the steps in this document below (see the "RHOAI 3.0 Model Deployment Steps" section).
 
 ```bash
-make install NAMESPACE=<namespace> minio.userId=<minio user Id> minio.password=<minio password> MODEL_NAME=<model resource name> MODEL_ENDPOINT=<http://model-url.com>
+make install NAMESPACE=<namespace> storage.accessKeyId=<storage access key> storage.secretAccessKey=<storage secret key> MODEL_NAME=<model resource name> MODEL_ENDPOINT=<http://model-url.com>
 ```
 The command above deploys the remaining components the application requires. NOTE: Don't add '/v1' to the model endpoint. Make sure to use your inference server's external endpoint.
 

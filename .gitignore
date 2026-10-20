@@ -201,3 +201,6 @@ build/
 
 # local files
 build_tests.sh
+
+# Helm dependency tarballs (downloaded by helm dependency build)
+helm/aws-compatible-storage/charts/*.tgz

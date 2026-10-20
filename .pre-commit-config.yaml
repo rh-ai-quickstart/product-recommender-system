@@ -45,7 +45,7 @@ repos:
     hooks:
       - id: helm-lint-warn
         name: Helm Lint
-        entry: bash -c 'cd helm/product-recommender-system/ && helm lint . && cd ../minio/ && helm lint . && cd ../pipeline-server/ && helm lint . || false'
+        entry: bash -c 'cd helm/product-recommender-system/ && helm lint . && cd ../aws-compatible-storage/ && helm lint . && cd ../pipeline-server/ && helm lint . || false'
         language: system
 
   # Warning-only Python linting (won't block commits)

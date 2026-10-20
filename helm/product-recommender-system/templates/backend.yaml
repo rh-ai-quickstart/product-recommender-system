@@ -101,9 +101,21 @@ spec:
             {{- if .Values.backend.additionalEnv }}
             {{- toYaml .Values.backend.additionalEnv | nindent 12 }}
             {{- end }}
-            {{- if .Values.minio.env }}
-            {{- toYaml .Values.minio.env | nindent 12 }}
-            {{- end }}
+            {{- include "product-recommender-system.objectStorageEnv" . | nindent 12 }}
+            - name: MINIO_HOST
+              value: aws-compatible-storage
+            - name: MINIO_PORT
+              value: "7480"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.objectStorage.credentialsSecret }}
+                  key: AWS_ACCESS_KEY_ID
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.objectStorage.credentialsSecret }}
+                  key: AWS_SECRET_ACCESS_KEY
             {{- include "product-recommender-system.feastEnv" . | nindent 12 }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
@@ -256,9 +268,21 @@ spec:
           {{- if .Values.backend.additionalEnv }}
           {{- toYaml .Values.backend.additionalEnv | nindent 12 }}
           {{- end }}
-          {{- if .Values.minio.env }}
-          {{- toYaml .Values.minio.env | nindent 12 }}
-          {{- end }}
+          {{- include "product-recommender-system.objectStorageEnv" . | nindent 12 }}
+            - name: MINIO_HOST
+              value: aws-compatible-storage
+            - name: MINIO_PORT
+              value: "7480"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.objectStorage.credentialsSecret }}
+                  key: AWS_ACCESS_KEY_ID
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.objectStorage.credentialsSecret }}
+                  key: AWS_SECRET_ACCESS_KEY
           {{- include "product-recommender-system.feastEnv" . | nindent 12 }}
         {{- if or .Values.backend.additionalVolumeMounts .Values.feast.secret }}
         volumeMounts:

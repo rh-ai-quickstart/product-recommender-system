@@ -10,7 +10,8 @@ import requests
 import tabulate as tb
 import torch
 from feast import FeatureStore
-from minio import Minio
+import boto3
+from botocore.config import Config
 from PIL import Image as PILImage
 from recommendation_core.models.data_util import data_preproccess
 from recommendation_core.models.entity_tower import EntityTower
@@ -75,21 +76,21 @@ class FeastService:
 
     def _load_user_encoder(self):
         """
-        Download and load the user encoder model and its configuration from MinIO.
+        Download and load the user encoder model and its configuration from S3 storage.
         """
-        minio_client = Minio(
-            endpoint=os.getenv("MINIO_HOST", "endpoint") + ":" + os.getenv("MINIO_PORT", "9000"),
-            access_key=os.getenv("MINIO_ACCESS_KEY", "access-key"),
-            secret_key=os.getenv("MINIO_SECRET_KEY", "secret-key"),
-            secure=False,
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url=os.getenv("S3_ENDPOINT_URL"),
+            region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+            config=Config(s3={"addressing_style": "path"}),
         )
         model_version = self._load_model_version()
         bucket_name = "user-encoder"
         object_name = f"user-encoder-{model_version}.pth"
         configuration = f"user-encoder-config-{model_version}.json"
 
-        minio_client.fget_object(bucket_name, object_name, "/tmp/user-encoder.pth")
-        minio_client.fget_object(bucket_name, configuration, "/tmp/user-encoder-config.json")
+        s3_client.download_file(bucket_name, object_name, "/tmp/user-encoder.pth")
+        s3_client.download_file(bucket_name, configuration, "/tmp/user-encoder-config.json")
 
         with open("/tmp/user-encoder-config.json", "r") as f:
             json_config = json.load(f)

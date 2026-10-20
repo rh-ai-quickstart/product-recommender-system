@@ -21,20 +21,19 @@ The following environment variables can be configured:
 To install the product recommender system:
 
 ```bash
-make install NAMESPACE=your-namespace minio.userId=fred minio.password=pass01
+make install NAMESPACE=your-namespace storage.accessKeyId=fred storage.secretAccessKey=pass0123
 ```
 
-The minio.userId and minio.password are used to set the user ID and password for the project-scoped minio instance, which is required for configuring the
-OpenShift Pipeline Application Server.
+The storage.accessKeyId and storage.secretAccessKey configure the S3-compatible storage credentials used by the OpenShift Pipeline Application Server.
 
-IMPORTANT: The minio.userId must be at least 3 characters long and the minio.password must be at least 8 characters long, otherwise the minio installation will fail.
+Both `storage.accessKeyId` and `storage.secretAccessKey` must be provided.
 
 The install command will:
 
 1. Create the specified namespace if it doesn't exist
 2. Update Helm dependencies
 3. Install/upgrade the Helm chart with the configured settings
-4. Install supporting resources, including a project-scoped minio instance and pipeline application server.
+4. Install S3-compatible object storage, create the recommender bucket, and install the pipeline application server.
 5. Wait for the deployment to complete (typically 10-15 minutes depending on the model size)
 
 ### Check Deployment Status

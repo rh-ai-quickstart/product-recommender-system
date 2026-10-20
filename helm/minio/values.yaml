@@ -1,3 +1,0 @@
-minio:
-  userId: <this is used to set the user id for the minio installation> # provide this when calling make (e.g., make install minio.userId=john01)
-  password: <this is used to set the password for the minio installation> # provide this wen calling make (e.g., make install minio.password=letmein);

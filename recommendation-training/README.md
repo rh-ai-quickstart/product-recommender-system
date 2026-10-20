@@ -59,7 +59,7 @@ The training pipeline performs these key steps:
 
 1. **Load Data from Feast**: Retrieves training data from the feature store
 2. **Train Model**: Creates and trains the two-tower recommendation model
-3. **Save Models**: Stores trained models in MinIO object storage
+3. **Save Models**: Stores trained models in S3-compatible object storage
 4. **Generate Candidates**: Creates embeddings and pre-calculated recommendations
 5. **Update Feature Store**: Pushes new features and recommendations to Feast
 
@@ -77,9 +77,9 @@ containers:
 ### Model Management
 
 The system uses a simplified model management approach:
-- **Storage**: Models saved directly to MinIO object storage
+- **Storage**: Models saved directly to S3-compatible object storage
 - **Versioning**: Tracked via database `model_version` table
-- **Loading**: Direct access from MinIO for better performance
+- **Loading**: Direct access from S3-compatible storage for better performance
 
 ## GitHub Actions
 

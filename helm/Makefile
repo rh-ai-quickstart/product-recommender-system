@@ -1,5 +1,4 @@
-# Makefile for RAG Deployment
-# Replaces the original deploy.sh script with additional uninstall functionality
+# Makefile for product recommender system deployment.
 ifeq ($(NAMESPACE),)
 ifeq (,$(filter depend% help,$(MAKECMDGOALS)))
 $(error NAMESPACE is not set)
@@ -8,24 +7,21 @@ endif
 
 MAKEFLAGS += --no-print-directory
 
-# Default values
 POSTGRES_USER ?= postgres
 POSTGRES_PASSWORD ?= recsys_password
 POSTGRES_DBNAME ?= recsys
-# HF_TOKEN ?= $(shell bash -c 'read -r -p "Enter Hugging Face Token: " HF_TOKEN; echo $$HF_TOKEN')
 PRODUCT_RECOMMENDER_CHART := product-recommender-system
-MINIO_CHART := minio
+STORAGE_CHART := aws-compatible-storage
 PIPELINE_SERVER_CHART := pipeline-server
-# Do we need this??
-TOLERATIONS_TEMPLATE=[{"key":"$(1)","effect":"NoSchedule","operator":"Exists"}]
-MINIMUM_OC_VERSION = "4.17.0"
-MINIMUM_USERID_LENGTH = 3
-MINIMUM_PASSWORD_LENGTH = 8
-REQUIRED_PARAMS = minio.userId minio.password
-# Model configuration - no defaults, must be provided
+STORAGE_SERVICE := aws-compatible-storage
+STORAGE_API_PORT := 7480
+STORAGE_BUCKET := recommender
+STORAGE_REGION := us-east-1
+STORAGE_SECRET := aws-compatible-storage-credentials
+MINIMUM_OC_VERSION = 4.17.0
 MODEL_NAME ?=
 MODEL_ENDPOINT ?=
-# Helm argument helpers
+
 helm_pgvector_args = \
 	--set pgvector.secret.user=$(POSTGRES_USER) \
 	--set pgvector.secret.password=$(POSTGRES_PASSWORD) \
@@ -38,50 +34,43 @@ model_args = \
 	--set llmModel.ollamaModel=$(MODEL_NAME) \
 	--set llmModel.modelEndpoint=$(MODEL_ENDPOINT)
 
-# Default target
+storage_args = \
+	--set aws-compatible-storage.s3.accessKeyId=$(storage.accessKeyId) \
+	--set aws-compatible-storage.s3.secretAccessKey=$(storage.secretAccessKey) \
+	--set aws-compatible-storage.auth.username=$(storage.accessKeyId) \
+	--set aws-compatible-storage.auth.password=$(storage.secretAccessKey)
+
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  install       - Installs recommender system and supporting resources; provide userId and password for minio; e.g., make install minio.userId=minio minio.password=minio123"
-	@echo "  uninstall     - Uninstall the recommender system app and clean up resources"
-	@echo "  status        - Check status of the deployment"
+	@echo "  install       - Install the recommender system and S3-compatible storage"
+	@echo "  uninstall     - Uninstall the recommender system and supporting resources"
+	@echo "  status        - Check the deployment status"
 	@echo ""
-	@echo "Configuration options (set via environment variables or make arguments):"
-	@echo "  NAMESPACE                - Target namespace (required)"
-	@echo "  minio.userId             - User ID to use for minio installation (required)"
-	@echo "  minio.password           - Password to use for minio installation (required)"
-	@echo "  MODEL_NAME               - Model name to use for review summarization (required)"
-	@echo "  MODEL_ENDPOINT           - Model endpoint URL (required)"
+	@echo "Configuration options:"
+	@echo "  NAMESPACE                  - Target namespace (required)"
+	@echo "  storage.accessKeyId        - S3 access key (required)"
+	@echo "  storage.secretAccessKey    - S3 secret key (required)"
+	@echo "  MODEL_NAME                 - Model name for review summarization (required)"
+	@echo "  MODEL_ENDPOINT             - Model endpoint URL (required)"
 
-# Older version of oc will raise error processing some of the commands in this make file; enforce a minimum version
 .PHONY: check-oc-version
 check-oc-version:
 	$(eval USER_OC_VERSION = $(shell oc version --client=true -o json | jq -r .clientVersion.gitVersion))
 	@echo "Detected oc version on your machine: $(USER_OC_VERSION)"
-	@echo "NOTE: This install script has only been tested for oc version $(MINIMUM_OC_VERSION) and the bash and zsh shells."
+	@echo "NOTE: This install script has only been tested for oc version $(MINIMUM_OC_VERSION) and bash/zsh."
 
-# Minio internally rejects user id and password values less than 3 and 8 characters, respectively
-# The install will fail if this occurs, so let's catch it early
-.PHONY: check-minio-credentials
-check-minio-credentials:
-	@if [ -z "$(minio.userId)" ]; then \
-		echo "Set minio.userId to a value that is at least $(MINIMUM_USERID_LENGTH) characters in length."; \
+.PHONY: check-storage-credentials
+check-storage-credentials:
+	@if [ -z "$(storage.accessKeyId)" ]; then \
+		echo "Set storage.accessKeyId to a non-empty value."; \
 		exit 1; \
 	fi
-	@if [ $$(wc -m <<< $(minio.userId)) -lt $$(expr $(MINIMUM_USERID_LENGTH) + 1) ]; then \
-		echo "Set minio.userId to a value that is at least $(MINIMUM_USERID_LENGTH) characters in length."; \
-		exit 1; \
-	fi
-	@if [ -z "$(minio.password)" ]; then \
-		echo "Set minio.password to a value that is at least $(MINIMUM_PASSWORD_LENGTH) characters in length."; \
-		exit 1; \
-	fi
-	@if [ $$(wc -m <<< $(minio.password)) -lt $$(expr $(MINIMUM_PASSWORD_LENGTH) + 1) ]; then \
-		echo "Set minio.password to a value that is at least $(MINIMUM_PASSWORD_LENGTH) characters in length."; \
+	@if [ -z "$(storage.secretAccessKey)" ]; then \
+		echo "Set storage.secretAccessKey to a non-empty value."; \
 		exit 1; \
 	fi
 
-# Model configuration must be provided
 .PHONY: check-model-config
 check-model-config:
 	@if [ -z "$(MODEL_NAME)" ]; then \
@@ -95,7 +84,6 @@ check-model-config:
 		exit 1; \
 	fi
 
-# Create namespace and deploy
 namespace:
 	@oc create namespace $(NAMESPACE) &> /dev/null && oc label namespace $(NAMESPACE) modelmesh-enabled=false ||:
 	@oc project $(NAMESPACE) &> /dev/null ||:
@@ -104,73 +92,52 @@ namespace:
 depend:
 	@echo "Updating Helm dependencies for $(PRODUCT_RECOMMENDER_CHART)"
 	@helm dependency update $(PRODUCT_RECOMMENDER_CHART) &> /dev/null
-	@echo "Updating Helm dependencies for $(MINIO_CHART)"
-	@helm dependency update $(MINIO_CHART) &> /dev/null
+	@echo "Updating Helm dependencies for $(STORAGE_CHART)"
+	@helm dependency update $(STORAGE_CHART) &> /dev/null
 
 .PHONY: install
-install: check-oc-version check-minio-credentials check-model-config namespace depend minio-install pipeline-server-install create-dynamic-secret product-recommender-install
+install: check-oc-version check-storage-credentials check-model-config namespace depend storage-install pipeline-server-install product-recommender-install
 
-.PHONY: minio-install
-minio-install:
-	@echo "Installing Minio helm chart and default bucket for recommender pipeline..."
-	@helm -n $(NAMESPACE) upgrade --install minio $(MINIO_CHART) \
-		--set minio.userId=$(minio.userId) \
-		--set minio.password=$(minio.password) \
+.PHONY: storage-install
+storage-install:
+	@echo "Installing S3-compatible storage and creating the recommender bucket..."
+	@helm -n $(NAMESPACE) upgrade --install $(STORAGE_SERVICE) $(STORAGE_CHART) \
+		$(storage_args) \
 		--timeout 5m
-	@echo "Waiting for Minio route 'minio-api' to become ready in namespace $(NAMESPACE)..."
-	@oc wait pod -l app=minio -n $(NAMESPACE) --for=condition=Ready --timeout=60s
+	@echo "Waiting for S3-compatible storage to become ready in namespace $(NAMESPACE)..."
+	@oc wait deployment/$(STORAGE_SERVICE) -n $(NAMESPACE) --for=condition=Available --timeout=180s
+	@oc wait job/aws-compatible-storage-upload-sample-docs -n $(NAMESPACE) --for=condition=complete --timeout=180s
 	@oc wait --for=jsonpath='{.status.ingress[0].conditions[?(@.type=="Admitted")].status}=True' \
-		route/minio-api -n $(NAMESPACE) --timeout=60s
-	@echo "Minio installation complete."
+		route/$(STORAGE_SERVICE)-api -n $(NAMESPACE) --timeout=60s
+	@echo "S3-compatible storage installation complete."
 
 .PHONY: pipeline-server-install
 pipeline-server-install:
-	@echo "Discovering Minio API endpoint..."
-	$(eval MINIO_API_HOST = $(shell oc get route minio-api -n $(NAMESPACE) -o jsonpath='{.spec.host}'))
-	@echo "Discovered Minio API Endpoint: https://$(MINIO_API_HOST)"
-	@echo "Looking up bucket and region name from config map ..."
-	$(eval DEFAULT_BUCKET= $(shell oc get configmap minio-config -n $(NAMESPACE) -o json | jq -r '.data["DEFAULT_BUCKET"]'))
-	@echo "Default bucket name: $(DEFAULT_BUCKET)"
-	$(eval DEFAULT_REGION= $(shell oc get configmap minio-config -n $(NAMESPACE) -o json | jq -r '.data["DEFAULT_REGION"]'))
-	@echo "Default region name: $(DEFAULT_REGION)"
-	@echo "Installing pipeline server chart..."
+	@echo "Installing pipeline server with S3-compatible artifact storage..."
 	@helm -n $(NAMESPACE) upgrade --install pipeline-server $(PIPELINE_SERVER_CHART) \
-		--set minio.apiEndpoint=$(MINIO_API_HOST) \
-		--set minio.defaultBucket=$(DEFAULT_BUCKET) \
-		--set minio.defaultRegion=$(DEFAULT_REGION) \
+		--set storage.apiEndpoint=$(STORAGE_SERVICE).$(NAMESPACE).svc.cluster.local \
+		--set storage.apiPort=$(STORAGE_API_PORT) \
+		--set storage.defaultBucket=$(STORAGE_BUCKET) \
+		--set storage.defaultRegion=$(STORAGE_REGION) \
+		--set storage.credentialsSecret=$(STORAGE_SECRET) \
 		--timeout 300m
 	@echo "Waiting for pipeline server to start in namespace $(NAMESPACE)..."
 	@for i in {1..25}; do \
-        oc get pod -l app=ds-pipeline-dspa -n $(NAMESPACE) 2>/dev/null | grep -q "Running\|ContainerCreating\|Pending" && break; \
-        echo "Pod not found yet, retrying (wait)..."; \
-        sleep 5; \
-    done
-	oc wait pod -l app=ds-pipeline-dspa -n $(NAMESPACE) --for=condition=Ready --timeout=180s
+		oc get pod -l app=ds-pipeline-dspa -n $(NAMESPACE) 2>/dev/null | grep -q "Running\|ContainerCreating\|Pending" && break; \
+		echo "Pod not found yet, retrying (wait)..."; \
+		sleep 5; \
+	done
+	@oc wait pod -l app=ds-pipeline-dspa -n $(NAMESPACE) --for=condition=Ready --timeout=180s
 	@echo "Pipeline server ready."
-
-.PHONY: create-dynamic-secret
-create-dynamic-secret:
-	@echo "Creating backward compatible secret for dspa settings"
-	$(eval MINIO_SERVICE_HOST = $(shell oc get svc minio-service -n $(NAMESPACE) -o=jsonpath='{.spec.clusterIP}'))
-	$(eval MINIO_SERVICE_PORT = $(shell oc get svc minio-service -n $(NAMESPACE) -o=jsonpath='{.spec.ports[?(@.name=="api")].port}'))
-	$(eval MINIO_ACCESS_KEY_VALUE = $(shell oc get secret minio-secret -n $(NAMESPACE) -o jsonpath='{.data.MINIO_ROOT_USER}' | base64 --decode))
-	$(eval MINIO_SECRET_KEY_VALUE = $(shell oc get secret minio-secret -n $(NAMESPACE) -o jsonpath='{.data.MINIO_ROOT_PASSWORD}' | base64 --decode))
-	@oc create secret generic ds-pipeline-s3-dspa -n $(NAMESPACE) \
-		--from-literal=host=$(MINIO_SERVICE_HOST) \
-		--from-literal=port=$(MINIO_SERVICE_PORT) \
-		--from-literal=accesskey=$(MINIO_ACCESS_KEY_VALUE) \
-		--from-literal=secretkey=$(MINIO_SECRET_KEY_VALUE) \
-		--from-literal=secure=false \
-		--dry-run=client -o yaml | oc apply -f -
 
 .PHONY: product-recommender-install
 product-recommender-install:
 	@$(eval PGVECTOR_ARGS := $(call helm_pgvector_args))
 	@$(eval DATASET_ARGS := $(call dataset_args))
 	@$(eval MODEL_ARGS := $(call model_args))
-	@echo "Installing $(PRODUCT_RECOMMENDER_CHART) helm chart"
-	@echo "Waiting for model services to deploy. It may take around 10-15 minutes depending on the size of the database..."
-	@helm -n $(NAMESPACE) upgrade --install $(PRODUCT_RECOMMENDER_CHART) $(PRODUCT_RECOMMENDER_CHART) -n $(NAMESPACE) \
+	@echo "Installing $(PRODUCT_RECOMMENDER_CHART)"
+	@echo "Waiting for model services to deploy. This may take 10-15 minutes..."
+	@helm -n $(NAMESPACE) upgrade --install $(PRODUCT_RECOMMENDER_CHART) $(PRODUCT_RECOMMENDER_CHART) \
 		$(PGVECTOR_ARGS) \
 		$(DATASET_ARGS) \
 		$(MODEL_ARGS) \
@@ -179,24 +146,23 @@ product-recommender-install:
 	@echo "$(PRODUCT_RECOMMENDER_CHART) installed successfully"
 	@echo "Frontend URL: https://$$(oc get route product-recommender-system-frontend -o jsonpath='{.spec.host}' -n $(NAMESPACE))"
 
-# Uninstall the deployment and clean up
 .PHONY: uninstall
-uninstall: check-oc-version product-recommender-uninstall pipeline-server-uninstall minio-uninstall delete-project
+uninstall: check-oc-version product-recommender-uninstall pipeline-server-uninstall storage-uninstall delete-project
 
 .PHONY: product-recommender-uninstall
 product-recommender-uninstall:
-	@echo "Uninstalling $(PRODUCT_RECOMMENDER_CHART) helm chart"
+	@echo "Uninstalling $(PRODUCT_RECOMMENDER_CHART)"
 	@helm -n $(NAMESPACE) uninstall $(PRODUCT_RECOMMENDER_CHART) || true
 	@echo "Deleting remaining pods in namespace $(NAMESPACE) for $(PRODUCT_RECOMMENDER_CHART)"
 	@oc delete jobs -n $(NAMESPACE) --all --grace-period=60 --ignore-not-found
 	@oc delete pods -n $(NAMESPACE) --all --grace-period=60 --ignore-not-found
 
-.PHONY: minio-uninstall
-minio-uninstall:
-	@echo "Uninstalling Minio helm chart"
-	@helm -n $(NAMESPACE) uninstall minio || true
-	@echo "Removing pgvector and minio PVCs from $(NAMESPACE)"
-	@oc get pvc -n $(NAMESPACE) -o custom-columns=NAME:.metadata.name | grep -E '^(pg|minio)-data' | xargs -I {} oc delete pvc -n $(NAMESPACE) {} ||:
+.PHONY: storage-uninstall
+storage-uninstall:
+	@echo "Uninstalling S3-compatible storage"
+	@helm -n $(NAMESPACE) uninstall $(STORAGE_SERVICE) || true
+	@echo "Removing pgvector and storage PVCs from $(NAMESPACE)"
+	@oc get pvc -n $(NAMESPACE) -o custom-columns=NAME:.metadata.name | grep -E '^(pg|aws-compatible-storage)' | xargs -I {} oc delete pvc -n $(NAMESPACE) {} ||:
 	@echo "Checking for any remaining resources in namespace $(NAMESPACE)..."
 	@echo "Remaining resources in namespace $(NAMESPACE):"
 	@$(MAKE) status
@@ -211,20 +177,15 @@ delete-project:
 	@echo "Attempting to delete OpenShift project $(NAMESPACE)..."
 	@oc delete project $(NAMESPACE)
 
-# Check deployment status
 .PHONY: status
 status:
 	@echo "Listing pods..."
 	oc get pods -n $(NAMESPACE) || true
-
 	@echo "Listing services..."
 	oc get svc -n $(NAMESPACE) || true
-
 	@echo "Listing routes..."
 	oc get routes -n $(NAMESPACE) || true
-
 	@echo "Listing secrets..."
 	oc get secrets -n $(NAMESPACE) | grep huggingface-secret || true
-
-	@echo "Listing pvcs..."
+	@echo "Listing PVCs..."
 	oc get pvc -n $(NAMESPACE) || true

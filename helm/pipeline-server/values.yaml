@@ -1,4 +1,6 @@
-minio:
-  defaultRegion: #set by make file
-  defaultBucket: #set by make file
-  apiEndpoint: #set by make file dynamically during deployment; do not set here.
+storage:
+  defaultRegion: # set by Makefile at deployment time
+  defaultBucket: # set by Makefile at deployment time
+  apiEndpoint: # set by Makefile at deployment time
+  apiPort: # set by Makefile at deployment time
+  credentialsSecret: # set by Makefile at deployment time

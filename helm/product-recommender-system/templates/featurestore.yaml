@@ -17,6 +17,8 @@ stringData:
     db_schema: public
     user: ${user}
     password: ${password}
+    sslmode: disable
+    vector_enabled: true
     # sslmode: verify-full
     # sslkey_path: /var/lib/postgresql/certs/tls.key
     # sslcert_path: /var/lib/postgresql/certs/tls.crt

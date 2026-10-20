@@ -230,28 +230,10 @@ llmModel:
   modelEndpoint: <this is the url of the model that used to summarize the reviews>
   # provide this when calling make (e.g., make install MODEL_ENDPOINT=https://model-url.com/v1)
 
-minio:
-  env:
-    - name: MINIO_HOST
-      valueFrom:
-        secretKeyRef:
-          name: ds-pipeline-s3-dspa
-          key: host
-    - name: MINIO_PORT
-      valueFrom:
-        secretKeyRef:
-          name: ds-pipeline-s3-dspa
-          key: port
-    - name: MINIO_ACCESS_KEY
-      valueFrom:
-        secretKeyRef:
-          name: ds-pipeline-s3-dspa
-          key: accesskey
-    - name: MINIO_SECRET_KEY
-      valueFrom:
-        secretKeyRef:
-          name: ds-pipeline-s3-dspa
-          key: secretkey
+objectStorage:
+  endpoint: http://aws-compatible-storage:7480
+  region: us-east-1
+  credentialsSecret: aws-compatible-storage-credentials
 
 feast:
   project: feast_rec_sys

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: product-recommender-storage
+description: S3-compatible object storage for the product recommender system
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+dependencies:
+  - name: aws-compatible-storage
+    version: 0.2.0
+    repository: https://rh-ai-quickstart.github.io/ai-architecture-charts
+    condition: aws-compatible-storage.enabled
