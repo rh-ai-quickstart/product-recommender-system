@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install system dependencies and tools
 USER 0
-RUN dnf install -y curl tar jq make skopeo && \
+RUN dnf install -y tar jq make skopeo && \
     curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -xz -C /usr/local/bin oc && \
     chmod +x /usr/local/bin/oc && \
     # Install Helm
