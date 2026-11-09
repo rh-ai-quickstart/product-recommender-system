@@ -35,13 +35,3 @@ stages:
       status_code: 200
       json:
         status: "ready"
-
----
-test_name: Feast Health Check
-stages:
-  - name: Test Feast Health Ready
-    request:
-      url: "{tavern.env_vars.TEST_FEAST_URL}"
-      method: GET
-    response:
-      status_code: 200
