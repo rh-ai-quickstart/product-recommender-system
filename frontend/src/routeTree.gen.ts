@@ -9,21 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProtectedRouteRouteImport } from './routes/_protected/route'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
-import { Route as ProtectedSearchRouteImport } from './routes/_protected/search'
-import { Route as ProtectedPreferencesRouteImport } from './routes/_protected/preferences'
-import { Route as ProtectedImageSearchRouteImport } from './routes/_protected/image-search'
-import { Route as ProtectedCatalogRouteImport } from './routes/_protected/catalog'
 import { Route as ProtectedAccountRouteImport } from './routes/_protected/account'
+import { Route as ProtectedCatalogRouteImport } from './routes/_protected/catalog'
+import { Route as ProtectedImageSearchRouteImport } from './routes/_protected/image-search'
+import { Route as ProtectedPreferencesRouteImport } from './routes/_protected/preferences'
+import { Route as ProtectedSearchRouteImport } from './routes/_protected/search'
 import { Route as ProtectedProductIndexRouteImport } from './routes/_protected/product/index'
 import { Route as ProtectedProductProductIdRouteImport } from './routes/_protected/product/$productId'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
+  id: '/_protected',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -31,8 +30,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
-  id: '/_protected',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
@@ -40,19 +40,9 @@ const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
-const ProtectedSearchRoute = ProtectedSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => ProtectedRouteRoute,
-} as any)
-const ProtectedPreferencesRoute = ProtectedPreferencesRouteImport.update({
-  id: '/preferences',
-  path: '/preferences',
-  getParentRoute: () => ProtectedRouteRoute,
-} as any)
-const ProtectedImageSearchRoute = ProtectedImageSearchRouteImport.update({
-  id: '/image-search',
-  path: '/image-search',
+const ProtectedAccountRoute = ProtectedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
 const ProtectedCatalogRoute = ProtectedCatalogRouteImport.update({
@@ -60,9 +50,19 @@ const ProtectedCatalogRoute = ProtectedCatalogRouteImport.update({
   path: '/catalog',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
-const ProtectedAccountRoute = ProtectedAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
+const ProtectedImageSearchRoute = ProtectedImageSearchRouteImport.update({
+  id: '/image-search',
+  path: '/image-search',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+const ProtectedPreferencesRoute = ProtectedPreferencesRouteImport.update({
+  id: '/preferences',
+  path: '/preferences',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+const ProtectedSearchRoute = ProtectedSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
 const ProtectedProductIndexRoute = ProtectedProductIndexRouteImport.update({
@@ -78,6 +78,7 @@ const ProtectedProductProductIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof ProtectedIndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/account': typeof ProtectedAccountRoute
@@ -85,9 +86,8 @@ export interface FileRoutesByFullPath {
   '/image-search': typeof ProtectedImageSearchRoute
   '/preferences': typeof ProtectedPreferencesRoute
   '/search': typeof ProtectedSearchRoute
-  '/': typeof ProtectedIndexRoute
   '/product/$productId': typeof ProtectedProductProductIdRoute
-  '/product': typeof ProtectedProductIndexRoute
+  '/product/': typeof ProtectedProductIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -118,6 +118,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/login'
     | '/signup'
     | '/account'
@@ -125,9 +126,8 @@ export interface FileRouteTypes {
     | '/image-search'
     | '/preferences'
     | '/search'
-    | '/'
     | '/product/$productId'
-    | '/product'
+    | '/product/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -163,11 +163,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
+    '/_protected': {
+      id: '/_protected'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ProtectedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -177,11 +177,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protected': {
-      id: '/_protected'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof ProtectedRouteRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/': {
@@ -191,25 +191,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedIndexRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
-    '/_protected/search': {
-      id: '/_protected/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof ProtectedSearchRouteImport
-      parentRoute: typeof ProtectedRouteRoute
-    }
-    '/_protected/preferences': {
-      id: '/_protected/preferences'
-      path: '/preferences'
-      fullPath: '/preferences'
-      preLoaderRoute: typeof ProtectedPreferencesRouteImport
-      parentRoute: typeof ProtectedRouteRoute
-    }
-    '/_protected/image-search': {
-      id: '/_protected/image-search'
-      path: '/image-search'
-      fullPath: '/image-search'
-      preLoaderRoute: typeof ProtectedImageSearchRouteImport
+    '/_protected/account': {
+      id: '/_protected/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof ProtectedAccountRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
     '/_protected/catalog': {
@@ -219,17 +205,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedCatalogRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
-    '/_protected/account': {
-      id: '/_protected/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof ProtectedAccountRouteImport
+    '/_protected/image-search': {
+      id: '/_protected/image-search'
+      path: '/image-search'
+      fullPath: '/image-search'
+      preLoaderRoute: typeof ProtectedImageSearchRouteImport
+      parentRoute: typeof ProtectedRouteRoute
+    }
+    '/_protected/preferences': {
+      id: '/_protected/preferences'
+      path: '/preferences'
+      fullPath: '/preferences'
+      preLoaderRoute: typeof ProtectedPreferencesRouteImport
+      parentRoute: typeof ProtectedRouteRoute
+    }
+    '/_protected/search': {
+      id: '/_protected/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof ProtectedSearchRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
     '/_protected/product/': {
       id: '/_protected/product/'
       path: '/product'
-      fullPath: '/product'
+      fullPath: '/product/'
       preLoaderRoute: typeof ProtectedProductIndexRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
