@@ -16,4 +16,6 @@ online_store:
   database: ${DB_NAME}
   user: ${DB_USER}
   password: ${DB_PASSWORD}
+  # Feast >= 0.62 defaults to sslmode=require; the bundled pgvector has no SSL.
+  sslmode: disable
   vector_enabled: true

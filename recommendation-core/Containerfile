@@ -5,6 +5,7 @@ WORKDIR /app/
 
 # install and activate env
 COPY pyproject.toml pyproject.toml
+COPY constraints.txt constraints.txt
 RUN pip3 install uv
 RUN dnf update -y
 # Copy all __init__.py files first
@@ -14,8 +15,9 @@ COPY src/recommendation_core/models/__init__.py src/recommendation_core/models/_
 COPY src/recommendation_core/service/__init__.py src/recommendation_core/service/__init__.py
 
 
-# Install the package after copying init files
-RUN uv pip install .
+# Install the package after copying init files; constraints.txt pins every
+# transitive dependency so image builds are reproducible.
+RUN uv pip install -c constraints.txt .
 
 
 # Copy the src directory with the new layout
