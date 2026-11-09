@@ -8,7 +8,7 @@ dependencies = [
     "alembic==1.13.1",
     "asyncpg==0.29.0",
     "fastapi==0.110.0",
-    "feast[postgres]==0.49.0",
+    "feast[postgres]==0.62.0",
     "grpcio>=1.71.0",
     "greenlet==3.2.2",
     "kafka-python>=2.2.11",

@@ -24,11 +24,15 @@ stringData:
     # sslcert_path: /var/lib/postgresql/certs/tls.crt
     # sslrootcert_path: system
 ---
-apiVersion: feast.dev/v1alpha1
+apiVersion: feast.dev/v1
 kind: FeatureStore
 metadata:
   name: feast-recommendation
 spec:
+  # The Feast operator in OpenShift AI 3.4+ enables Kubernetes token auth by
+  # default; our clients don't send tokens, so disable auth explicitly.
+  authz:
+    noAuth: true
   feastProject: {{ .Values.feast.project }}
   feastProjectDir:
     git:
