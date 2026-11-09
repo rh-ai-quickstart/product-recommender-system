@@ -296,18 +296,27 @@ def generate_candidates(
         allow_registry_cache=False,
     )
 
-    # Materilize the online store
-    store.materialize_incremental(
-        current_time,
-        feature_views=[
-            "item_embedding",
-            "user_items",
-            "item_features",
-            "item_textual_features_embed",
-            "item_name_features_embed",
-            "item_category_features_embed",
-        ],
-    )
+    # Materialize the online store one feature view at a time. The Feast server
+    # in OpenShift AI 3.4 fails in ApplyMaterialization ("unexpected keyword
+    # argument 'skip_udf'") *after* the rows are written to the online store;
+    # only the registry bookkeeping is lost, so tolerate that specific error.
+    for feature_view in [
+        "item_embedding",
+        "user_items",
+        "item_features",
+        "item_textual_features_embed",
+        "item_name_features_embed",
+        "item_category_features_embed",
+    ]:
+        try:
+            store.materialize_incremental(current_time, feature_views=[feature_view])
+        except Exception as e:
+            if "skip_udf" not in str(e):
+                raise
+            logger.warning(
+                f"Materialized {feature_view}, but the registry did not record it "
+                f"(known Feast server bug): {e}"
+            )
 
     # Calculate user recommendations for each user
     item_embedding_view = "item_embedding"
