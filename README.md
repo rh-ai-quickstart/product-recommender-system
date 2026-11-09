@@ -43,7 +43,7 @@ This quickstart is a complete, cloud-native product recommender system showcasin
 - CLI tools: `oc` and `helm`
 - Container registry access to push images (e.g., quay.io)
 
-Recommended OpenShift AI components enabled: DataSciencePipelines, Feast Operator, Model Registry, KServe/ModelMesh (Managed in your `DataScienceCluster`).
+Required OpenShift AI components (set to `Managed` in your `DataScienceCluster`): AI Pipelines (`aipipelines`), Feast Operator (`feastoperator`), and KServe (`kserve`, to serve the LLM). The install fails if AI Pipelines or the Feast Operator is set to `Removed`.
 
 ### Minimum hardware requirements
 
@@ -53,9 +53,25 @@ Recommended OpenShift AI components enabled: DataSciencePipelines, Feast Operato
 
 ### Minimum software requirements
 
-- **OpenShift 4.17.0+** cluster with OpenShift AI
+- **OpenShift** cluster with **OpenShift AI 3.4+** (the app's Feast client must match the Feast server that OpenShift AI deploys)
 - **oc CLI 4.17.0+** and **Helm 3.x**
 - **Access to quay.io** to be able to pull down container images
+
+### Tested with
+
+This quickstart installs its own application components (frontend/backend, PostgreSQL with pgvector, S3-compatible storage, the Feast feature store definition, and the training pipeline). It relies on the following platform components that it does **not** install; it was last tested with:
+
+| Dependency | Tested version |
+|---|---|
+| OpenShift Container Platform | 4.22.6 (Kubernetes 1.35) |
+| Red Hat OpenShift AI | 3.4.4 |
+| Feast Operator / Feast server (provided by OpenShift AI) | Feast 0.62.0; `FeatureStore` API `feast.dev/v1` |
+| AI Pipelines (provided by OpenShift AI) | Data Science Pipelines v2 (Argo Workflows); `DataSciencePipelinesApplication` API `v1` |
+| LLM for review summarization (deployed separately) | Granite 4.1 8B FP8 (`RedHatAI/granite-4.1-8b-fp8`) on vLLM 0.18.0, served by KServe |
+| GPU for the LLM | 1x NVIDIA L40S (AWS `g6e.2xlarge`) |
+| Client tools | `oc` 4.17.0, Helm 3.17.2 |
+
+The application images pin the Feast client to the same version as the server (`feast[postgres]==0.62.0`). If you run a different OpenShift AI release, its Feast server version may differ; after installing, you can check it with `oc exec -n <namespace> deploy/feast-feast-recommendation -c registry -- feast version`.
 
 ### Required user permissions
 
