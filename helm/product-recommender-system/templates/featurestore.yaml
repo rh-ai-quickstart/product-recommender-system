@@ -82,10 +82,8 @@ spec:
           envFrom:
             - secretRef:
                 name: pgvector
-    ui:
-      envFrom:
-        - secretRef:
-            name: pgvector
+    # The Feast UI is intentionally not deployed: the app doesn't use it, and the
+    # operator would expose it (including the full registry) on a public route.
 
 ---
 apiVersion: batch/v1

@@ -29,7 +29,6 @@ fi
 
 # Get URLs dynamically using the namespace
 export TEST_FRONTEND_URL=$(oc get routes product-recommender-system-frontend -n "$NAMESPACE" -o json | jq -r '"https://" + .spec.host')
-export TEST_FEAST_URL=$(oc get routes feast-feast-recommendation-ui -n "$NAMESPACE" -o json | jq -r '"https://" + .spec.host')
 
 # Generate unique timestamp for test emails
 export TEST_TIMESTAMP=$(date +%s)
@@ -37,7 +36,6 @@ export TEST_TIMESTAMP=$(date +%s)
 echo "Testing with:"
 echo "Namespace: $NAMESPACE"
 echo "Frontend URL: $TEST_FRONTEND_URL"
-echo "Feast URL: $TEST_FEAST_URL"
 echo ""
 
 # Validate critical URLs (Frontend and Backend)
@@ -45,11 +43,9 @@ echo "Validating URLs..."
 validate_url "$TEST_FRONTEND_URL" "Frontend"
 frontend_valid=$?
 
-validate_url "$TEST_FEAST_URL" "Feast"
-feast_valid=$?
-
-# Exit if either critical URL is invalid
-if [ $frontend_valid -ne 0 ] || [ $feast_valid -ne 0 ]; then
+# Feast is exercised through the backend (recommendation and search tests);
+# the Feast UI route is no longer deployed.
+if [ $frontend_valid -ne 0 ]; then
     echo "ERROR: One or more critical URLs are invalid. Exiting."
     exit 1
 fi
